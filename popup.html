@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>📘 English Study</h1>
+      <div class="count">
+        <span id="total">0</span> palavras conhecidas
+      </div>
+    </header>
+
+    <div class="row">
+      <input id="search" type="text" placeholder="Buscar palavra..." />
+      <input id="add-input" type="text" placeholder="Adicionar palavra" />
+      <button id="add-btn">+</button>
+    </div>
+
+    <div class="row actions">
+      <button id="export">Exportar JSON</button>
+      <button id="import">Importar JSON</button>
+      <button id="clear" class="danger">Limpar tudo</button>
+      <input type="file" id="file-input" accept="application/json" hidden />
+    </div>
+
+    <ul id="list"></ul>
+
+    <footer>
+      Abra um video no YouTube e ative as legendas (CC). Clique em qualquer
+      palavra para marca-la como conhecida.
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
