@@ -124,22 +124,41 @@ function reprocessAllSegments() {
 
 function startCaptionObserver() {
   if (captionObserver) captionObserver.disconnect();
-  const player = document.getElementById("movie_player") || document.body;
+
+  const captionContainer =
+    document.querySelector(".ytp-caption-window-container") ||
+    document.querySelector(".caption-window") ||
+    document.getElementById("movie_player");
+  if (!captionContainer) return;
+
+  let rafPending = false;
+
   captionObserver = new MutationObserver((mutations) => {
-    if (isMutating) return;
-    let hasCaptionChange = false;
-    for (const m of mutations) {
-      const target = m.target;
-      if (!(target instanceof Element) && !(target.parentElement)) continue;
-      const el = target instanceof Element ? target : target.parentElement;
-      if (el && el.closest(".ytp-caption-segment, .caption-window")) {
-        hasCaptionChange = true;
-        break;
+    if (isMutating || rafPending) return;
+
+    // When observing broadly (movie_player), filter to caption-related mutations only
+    if (!captionContainer.classList.contains("ytp-caption-window-container") &&
+        !captionContainer.classList.contains("caption-window")) {
+      let hasCaptionChange = false;
+      for (const m of mutations) {
+        const target = m.target;
+        const el = target instanceof Element ? target : target.parentElement;
+        if (el && el.closest(".ytp-caption-segment, .caption-window")) {
+          hasCaptionChange = true;
+          break;
+        }
       }
+      if (!hasCaptionChange) return;
     }
-    if (hasCaptionChange) processAllSegments();
+
+    rafPending = true;
+    requestAnimationFrame(() => {
+      rafPending = false;
+      processAllSegments();
+    });
   });
-  captionObserver.observe(player, {
+
+  captionObserver.observe(captionContainer, {
     childList: true,
     subtree: true,
     characterData: true,
@@ -285,7 +304,10 @@ function waitForPlayerAndObserve() {
   let tries = 0;
   const iv = setInterval(() => {
     tries++;
-    if (document.getElementById("movie_player")) {
+    const target =
+      document.querySelector(".ytp-caption-window-container") ||
+      document.getElementById("movie_player");
+    if (target) {
       startCaptionObserver();
       clearInterval(iv);
     } else if (tries > 40) {
