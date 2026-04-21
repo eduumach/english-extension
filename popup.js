@@ -1,12 +1,15 @@
 const STORAGE_KEY = "knownWords";
+const SEEN_KEY = "seenWords";
 
 const $ = (id) => document.getElementById(id);
 
 let words = [];
+let seen = {};
 
 async function load() {
-  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const data = await chrome.storage.local.get([STORAGE_KEY, SEEN_KEY]);
   words = (data[STORAGE_KEY] || []).slice().sort();
+  seen = data[SEEN_KEY] || {};
   render();
 }
 
@@ -16,6 +19,7 @@ async function save() {
 
 function render() {
   $("total").textContent = words.length;
+  $("seen-total").textContent = Object.keys(seen).length;
   const q = $("search").value.trim().toLowerCase();
   const filtered = q ? words.filter((w) => w.includes(q)) : words;
   const list = $("list");
@@ -116,9 +120,37 @@ $("clear").addEventListener("click", async () => {
   render();
 });
 
+$("export-seen").addEventListener("click", () => {
+  const entries = Object.entries(seen).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  if (!entries.length) {
+    alert("Nenhuma palavra vista ainda. Assista um video com legendas.");
+    return;
+  }
+  const text = "palavra\tvezes\n" + entries.map(([w, c]) => `${w}\t${c}`).join("\n") + "\n";
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `vistas-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$("clear-seen").addEventListener("click", async () => {
+  if (!confirm("Apagar historico de palavras vistas? (suas palavras conhecidas NAO serao afetadas)")) return;
+  seen = {};
+  await chrome.storage.local.set({ [SEEN_KEY]: seen });
+  render();
+});
+
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes[STORAGE_KEY]) {
+  if (area !== "local") return;
+  if (changes[STORAGE_KEY]) {
     words = (changes[STORAGE_KEY].newValue || []).slice().sort();
+    render();
+  }
+  if (changes[SEEN_KEY]) {
+    seen = changes[SEEN_KEY].newValue || {};
     render();
   }
 });

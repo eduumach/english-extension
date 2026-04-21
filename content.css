@@ -69,6 +69,19 @@
 #yt-eng-ext-panel .yt-eng-title {
   font-weight: 600;
   font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#yt-eng-ext-panel .yt-eng-icon {
+  flex-shrink: 0;
+}
+
+#yt-eng-ext-panel #yt-eng-export-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 #yt-eng-ext-panel .yt-eng-btn-icon {
@@ -92,6 +105,18 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+#yt-eng-ext-panel .yt-eng-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#yt-eng-ext-panel .yt-eng-label-row .yt-eng-label {
+  margin-bottom: 0;
 }
 
 #yt-eng-ext-panel .yt-eng-label {

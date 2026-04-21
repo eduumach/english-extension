@@ -6,7 +6,10 @@
   </head>
   <body>
     <header>
-      <h1>📘 English Study</h1>
+      <h1>
+        <svg class="app-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        English Study
+      </h1>
       <div class="count">
         <span id="total">0</span> palavras conhecidas
       </div>
@@ -23,6 +26,13 @@
       <button id="import">Importar JSON</button>
       <button id="clear" class="danger">Limpar tudo</button>
       <input type="file" id="file-input" accept="application/json" hidden />
+    </div>
+
+    <div class="row actions">
+      <button id="export-seen" title="Exportar todas as palavras vistas em videos, com frequencia">
+        Exportar vistas (<span id="seen-total">0</span>)
+      </button>
+      <button id="clear-seen" class="danger" title="Limpar historico de palavras vistas">Limpar vistas</button>
     </div>
 
     <ul id="list"></ul>
