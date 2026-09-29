@@ -1,1 +1,6 @@
 out
+node_modules
+dist
+.wxt
+.output
+.DS_Store

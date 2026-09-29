@@ -1,19 +1,26 @@
-// OpenAI-compatible chat client, shared by background.js and popup.js.
+// OpenAI-compatible chat client, shared by the background and the hub.
 // DeepSeek is the default; any provider exposing /chat/completions
 // (OpenAI, OpenRouter, Groq, ...) works by changing baseUrl and model.
-const LLM_KEY = "llm";
-const DEFAULT_LLM = {
+export const LLM_KEY = "llm";
+export const DEFAULT_LLM = {
   baseUrl: "https://api.deepseek.com",
   model: "deepseek-chat",
   apiKey: "",
 };
 
-async function getLlmConfig() {
-  const data = await chrome.storage.local.get(LLM_KEY);
+export type LlmConfig = typeof DEFAULT_LLM;
+
+export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+export async function getLlmConfig(): Promise<LlmConfig> {
+  const data = await browser.storage.local.get(LLM_KEY);
   return { ...DEFAULT_LLM, ...(data[LLM_KEY] || {}) };
 }
 
-async function chatJSON(messages, { temperature = 0.7, timeoutMs = 60000 } = {}) {
+export async function chatJSON(
+  messages: ChatMessage[],
+  { temperature = 0.7, timeoutMs = 60000 } = {},
+): Promise<any> {
   const cfg = await getLlmConfig();
   if (!cfg.apiKey) throw new Error("no-api-key");
   const ctrl = new AbortController();

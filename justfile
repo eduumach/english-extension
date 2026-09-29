@@ -1,24 +1,18 @@
 default: package
 
-# Build extension zip for Chrome Web Store, named by manifest version.
-# Whitelists files explicitly para nao vazar .git, .claude, README, zips antigos, etc.
-package:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    version=$(grep '"version"' manifest.json | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
-    mkdir -p out
-    outfile="out/english-extension-${version}.zip"
-    rm -f "$outfile"
-    zip -r "$outfile" \
-        manifest.json \
-        content.js content.css page-hook.js background.js llm.js \
-        popup.html popup.js popup.css common.js \
-        hub.html hub.js hub.css \
-        icons
-    echo ""
-    echo "built: $outfile"
-    unzip -l "$outfile"
+# Dev mode with hot reload (opens a Chrome instance with the extension loaded)
+dev:
+    npm run dev
 
-# Remove all generated zip files
+# Build the extension into dist/chrome-mv3
+build:
+    npm run build
+
+# Type-check and build the Chrome Web Store zip (dist/*.zip), named by package.json version
+package:
+    npm run compile
+    npm run zip
+
+# Remove build outputs
 clean:
-    rm -rf out
+    rm -rf dist .output out
