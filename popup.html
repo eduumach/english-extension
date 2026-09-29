@@ -10,10 +10,57 @@
         <svg class="app-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         English Study
       </h1>
-      <div class="count">
-        <span id="total">0</span> palavras conhecidas
-      </div>
+      <label class="power" title="Desative para assistir sem a extensao">
+        <input type="checkbox" data-setting="enabled" />
+        <span class="switch"></span>
+        <span id="power-label">Ativada</span>
+      </label>
     </header>
+    <div class="count">
+      <span id="total">0</span> palavras conhecidas
+    </div>
+
+    <div class="settings">
+      <label>
+        Idioma do dicionario
+        <select id="target-lang">
+          <option value="pt">Portugues</option>
+          <option value="es">Espanhol</option>
+          <option value="fr">Frances</option>
+          <option value="de">Alemao</option>
+          <option value="it">Italiano</option>
+          <option value="ja">Japones</option>
+        </select>
+      </label>
+      <label><input type="checkbox" data-setting="autoPause" /> Pausar ao fim de cada frase (Q)</label>
+      <label><input type="checkbox" data-setting="pauseOnHover" /> Pausar ao passar o mouse na legenda</label>
+      <label><input type="checkbox" data-setting="quizAfterVideo" /> Exercicios ao terminar o video</label>
+    </div>
+
+    <div class="progress" id="progress"></div>
+
+    <div class="cards">
+      <div class="cards-head">Cartoes Anki: <b id="cards-total">0</b> (<span id="cards-new">0</span> novos)</div>
+      <div class="row">
+        <button id="cards-export" title="Exporta os cartoes ainda nao exportados">Exportar novos</button>
+        <button id="cards-export-all">Exportar todos</button>
+        <button id="cards-clear" class="danger">Limpar</button>
+      </div>
+      <small>No video, clique no + de uma frase (ou tecle E). No Anki: Arquivo → Importar.</small>
+    </div>
+
+    <details class="llm" id="llm-section">
+      <summary>IA para exercicios <span id="llm-state"></span></summary>
+      <label>Chave da API <input id="llm-key" type="password" placeholder="sk-..." autocomplete="off" /></label>
+      <label>Modelo <input id="llm-model" type="text" /></label>
+      <label>URL base <input id="llm-url" type="text" /></label>
+      <div class="row">
+        <button id="llm-save">Salvar</button>
+        <button id="llm-test">Testar</button>
+        <span id="llm-msg"></span>
+      </div>
+      <small>Padrao: DeepSeek. Qualquer API compativel com OpenAI funciona trocando URL e modelo. A chave fica so neste navegador.</small>
+    </details>
 
     <div class="row">
       <input id="search" type="text" placeholder="Buscar palavra..." />
@@ -38,10 +85,11 @@
     <ul id="list"></ul>
 
     <footer>
-      Abra um video no YouTube e ative as legendas (CC). Clique em qualquer
-      palavra para marca-la como conhecida.
+      Abra um video no YouTube com legendas. Clique numa palavra para marca-la
+      como aprendida; Shift+clique abre o dicionario.
     </footer>
 
+    <script src="llm.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -1,10 +1,17 @@
 {
   "manifest_version": 3,
   "name": "YouTube English Study",
-  "version": "0.1.0",
-  "description": "Captura as legendas do YouTube e destaca palavras novas vs. conhecidas para estudar ingles.",
-  "permissions": ["storage"],
-  "host_permissions": ["https://www.youtube.com/*"],
+  "version": "0.4.1",
+  "description": "Estude ingles no YouTube: legendas duplas, transcricao clicavel, dicionario e vocabulario.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api.dictionaryapi.dev/*",
+    "https://api.deepseek.com/*"
+  ],
   "action": {
     "default_title": "YouTube English Study",
     "default_popup": "popup.html",
@@ -25,10 +32,32 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["content.js"],
-      "css": ["content.css"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "page-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "optional_host_permissions": [
+    "https://*/*"
   ]
 }

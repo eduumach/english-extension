@@ -11,7 +11,7 @@ package:
     rm -f "$outfile"
     zip -r "$outfile" \
         manifest.json \
-        content.js content.css \
+        content.js content.css page-hook.js background.js llm.js \
         popup.html popup.js popup.css \
         icons
     echo ""

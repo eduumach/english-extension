@@ -1,6 +1,6 @@
-/* ---------- Palavras coloridas DENTRO da legenda do player ---------- */
+/* ---------- Palavras coloridas (legenda nativa + overlay proprio) ---------- */
 
-.ytp-caption-segment .yt-eng-word {
+.yt-eng-word {
   cursor: pointer;
   pointer-events: auto;
   border-radius: 3px;
@@ -8,18 +8,27 @@
   transition: filter 0.1s;
 }
 
-.ytp-caption-segment .yt-eng-word.yt-eng-known {
+.ytp-caption-segment .yt-eng-word.yt-eng-known,
+#yt-eng-overlay .yt-eng-word.yt-eng-known {
   color: #7fff7f !important;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
 }
 
-.ytp-caption-segment .yt-eng-word.yt-eng-new {
+.ytp-caption-segment .yt-eng-word.yt-eng-seen,
+#yt-eng-overlay .yt-eng-word.yt-eng-seen {
   color: #ffe066 !important;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
   font-weight: 700;
 }
 
-.ytp-caption-segment .yt-eng-word:hover {
+.ytp-caption-segment .yt-eng-word.yt-eng-new,
+#yt-eng-overlay .yt-eng-word.yt-eng-new {
+  color: #ff9e5e !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
+  font-weight: 700;
+}
+
+.yt-eng-word:hover {
   filter: brightness(1.3);
   text-decoration: underline;
 }
@@ -38,7 +47,7 @@
   position: fixed;
   top: 80px;
   right: 16px;
-  width: 300px;
+  width: 340px;
   max-height: calc(100vh - 120px);
   background: #0f0f0f;
   color: #f1f1f1;
@@ -145,14 +154,14 @@
   flex: 1;
   background: #181818;
   border-radius: 6px;
-  padding: 8px;
+  padding: 6px 4px;
   text-align: center;
   display: flex;
   flex-direction: column;
 }
 
 #yt-eng-ext-panel .yt-eng-stats span {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: #f1f1f1;
 }
@@ -196,4 +205,589 @@
   padding: 8px 10px;
   border-radius: 6px;
   border-left: 3px solid #3ea6ff;
+}
+
+#yt-eng-ext-panel .yt-eng-header-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+#yt-eng-ext-panel .yt-eng-toggle-btn.on {
+  background: #3ea6ff;
+  color: #0f0f0f;
+}
+
+#yt-eng-ext-panel.has-track {
+  height: calc(100vh - 120px);
+}
+
+#yt-eng-ext-panel.has-track.collapsed {
+  height: auto;
+}
+
+#yt-eng-ext-panel.has-track .yt-eng-body {
+  flex: 1;
+  min-height: 0;
+}
+
+#yt-eng-ext-panel .yt-eng-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+#yt-eng-ext-panel .yt-eng-status[hidden],
+#yt-eng-ext-panel .yt-eng-btn-icon[hidden] {
+  display: none;
+}
+
+/* ---------- Transcricao ---------- */
+
+#yt-eng-transcript {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -12px;
+}
+
+#yt-eng-ext-panel:not(.has-track) #yt-eng-transcript {
+  display: none;
+}
+
+#yt-eng-transcript .yt-eng-line {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  line-height: 1.45;
+  border-left: 3px solid transparent;
+}
+
+#yt-eng-transcript .yt-eng-line:hover {
+  background: #181818;
+}
+
+#yt-eng-transcript .yt-eng-line.active {
+  background: #1f2a36;
+  border-left-color: #3ea6ff;
+}
+
+#yt-eng-transcript .yt-eng-time {
+  flex-shrink: 0;
+  width: 38px;
+  color: #666;
+  font-size: 11px;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+#yt-eng-transcript .yt-eng-line-body {
+  flex: 1;
+  min-width: 0;
+}
+
+#yt-eng-transcript .yt-eng-word.yt-eng-known {
+  color: #e8e8e8;
+}
+
+#yt-eng-transcript .yt-eng-word.yt-eng-seen {
+  color: #ffe066;
+}
+
+#yt-eng-transcript .yt-eng-word.yt-eng-new {
+  color: #ff9e5e;
+}
+
+#yt-eng-ext-panel .yt-eng-chip.yt-eng-new {
+  background: rgba(255, 158, 94, 0.15);
+  color: #ff9e5e;
+  border-color: rgba(255, 158, 94, 0.35);
+}
+
+#yt-eng-ext-panel .yt-eng-stat-known span {
+  color: #7fff7f;
+}
+
+#yt-eng-ext-panel .yt-eng-stat-seen span {
+  color: #ffe066;
+}
+
+#yt-eng-ext-panel .yt-eng-stat-new span {
+  color: #ff9e5e;
+}
+
+#yt-eng-ext-panel .yt-eng-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 3px 0 6px;
+}
+
+#yt-eng-ext-panel .yt-eng-dot:first-child {
+  margin-left: 0;
+}
+
+#yt-eng-ext-panel .yt-eng-dot.yt-eng-known {
+  background: #7fff7f;
+}
+
+#yt-eng-ext-panel .yt-eng-dot.yt-eng-seen {
+  background: #ffe066;
+}
+
+#yt-eng-ext-panel .yt-eng-dot.yt-eng-new {
+  background: #ff9e5e;
+}
+
+#yt-eng-ext-panel details.yt-eng-section > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+#yt-eng-ext-panel details.yt-eng-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+#yt-eng-ext-panel details.yt-eng-section > summary .yt-eng-label::before {
+  content: "▸ ";
+}
+
+#yt-eng-ext-panel details.yt-eng-section[open] > summary .yt-eng-label::before {
+  content: "▾ ";
+}
+
+/* ---------- Overlay de legenda no player ---------- */
+
+#movie_player.yt-eng-has-track .ytp-caption-window-container {
+  display: none !important;
+}
+
+#yt-eng-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  width: 90%;
+  text-align: center;
+  z-index: 60;
+  pointer-events: none;
+  font-family: "YouTube Noto", Roboto, Arial, sans-serif;
+  font-size: var(--yt-eng-fs, 22px);
+  line-height: 1.3;
+  transition: bottom 0.15s;
+}
+
+#movie_player:not(.ytp-autohide) #yt-eng-overlay {
+  bottom: calc(8% + 44px);
+}
+
+#movie_player:not(.yt-eng-has-track) #yt-eng-overlay,
+#movie_player.ad-showing #yt-eng-overlay,
+#yt-eng-overlay.empty {
+  display: none;
+}
+
+#yt-eng-overlay .yt-eng-ov-box {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.15em 0.5em 0.25em;
+  background: rgba(8, 8, 8, 0.78);
+  border-radius: 4px;
+  pointer-events: auto;
+  color: #fff;
+}
+
+
+/* ---------- Popup de palavra ---------- */
+
+#yt-eng-popup {
+  position: fixed;
+  z-index: 2147483001;
+  width: 300px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #0f0f0f;
+  color: #f1f1f1;
+  border: 1px solid #303030;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+#yt-eng-popup .yt-eng-pp-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+#yt-eng-popup .yt-eng-pp-word {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffe066;
+}
+
+#yt-eng-popup .yt-eng-pp-phon {
+  flex: 1;
+  color: #888;
+  font-size: 12px;
+}
+
+#yt-eng-popup .yt-eng-pp-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #303030;
+  color: #f1f1f1;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#yt-eng-popup .yt-eng-pp-btn:hover {
+  background: #404040;
+}
+
+#yt-eng-popup .yt-eng-pp-tr {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+#yt-eng-popup .yt-eng-pp-alt {
+  color: #ccc;
+  font-size: 12px;
+}
+
+#yt-eng-popup i {
+  color: #3ea6ff;
+  font-style: normal;
+  font-size: 11px;
+}
+
+#yt-eng-popup .yt-eng-pp-defs {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #ddd;
+  font-size: 12px;
+}
+
+#yt-eng-popup .yt-eng-pp-defs li + li {
+  margin-top: 4px;
+}
+
+#yt-eng-popup .yt-eng-pp-ex {
+  color: #888;
+  font-style: italic;
+}
+
+#yt-eng-popup .yt-eng-pp-muted {
+  color: #888;
+}
+
+#yt-eng-popup .yt-eng-pp-toggle {
+  width: 100%;
+  margin-top: 10px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(127, 255, 127, 0.4);
+  background: rgba(127, 255, 127, 0.12);
+  color: #7fff7f;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#yt-eng-popup .yt-eng-pp-toggle.known {
+  border-color: rgba(255, 224, 102, 0.4);
+  background: rgba(255, 224, 102, 0.12);
+  color: #ffe066;
+}
+
+/* ---------- Exercicios (quiz) ---------- */
+
+#yt-eng-quiz {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#yt-eng-quiz .yt-eng-qz-card {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: #0f0f0f;
+  color: #f1f1f1;
+  border: 1px solid #303030;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+#yt-eng-quiz .yt-eng-qz-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #202020;
+  border-bottom: 1px solid #303030;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+#yt-eng-quiz button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#yt-eng-quiz .yt-eng-qz-x {
+  background: #303030;
+  color: #f1f1f1;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 14px;
+}
+
+#yt-eng-quiz .yt-eng-qz-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#yt-eng-quiz .yt-eng-qz-msg {
+  color: #aaa;
+  text-align: center;
+  padding: 18px 0;
+}
+
+#yt-eng-quiz .yt-eng-qz-progress {
+  font-size: 12px;
+  color: #888;
+}
+
+#yt-eng-quiz .yt-eng-qz-word {
+  font-weight: 700;
+}
+
+#yt-eng-quiz .yt-eng-known { color: #7fff7f; }
+#yt-eng-quiz .yt-eng-seen { color: #ffe066; }
+#yt-eng-quiz .yt-eng-new { color: #ff9e5e; }
+
+#yt-eng-quiz .yt-eng-qz-question {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+#yt-eng-quiz .yt-eng-qz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#yt-eng-quiz .yt-eng-qz-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 9px 10px;
+  background: #1a1a1a;
+  color: #f1f1f1;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+#yt-eng-quiz .yt-eng-qz-opt:not([disabled]):hover {
+  border-color: #3ea6ff;
+}
+
+#yt-eng-quiz .yt-eng-qz-opt[disabled] {
+  cursor: default;
+  opacity: 0.7;
+}
+
+#yt-eng-quiz .yt-eng-qz-opt.correct {
+  opacity: 1;
+  border-color: #7fff7f;
+  background: rgba(127, 255, 127, 0.12);
+}
+
+#yt-eng-quiz .yt-eng-qz-opt.wrong {
+  opacity: 1;
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+}
+
+#yt-eng-quiz kbd {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 11px;
+  color: #888;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  padding: 0 5px;
+}
+
+#yt-eng-quiz .yt-eng-qz-expl {
+  font-size: 13px;
+  color: #ccc;
+  background: #181818;
+  border-left: 3px solid #3ea6ff;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+#yt-eng-quiz .yt-eng-qz-main {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #3ea6ff;
+  color: #0f0f0f;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#yt-eng-quiz .yt-eng-qz-main kbd {
+  color: #0f0f0f;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+#yt-eng-quiz .yt-eng-qz-score {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+}
+
+#yt-eng-quiz .yt-eng-qz-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#yt-eng-quiz .yt-eng-qz-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+  border-bottom: 1px solid #202020;
+}
+
+#yt-eng-quiz .yt-eng-qz-rw {
+  flex: 1;
+  font-weight: 600;
+}
+
+#yt-eng-quiz .yt-eng-qz-mark.ok,
+#yt-eng-quiz .yt-eng-qz-ok { color: #7fff7f; }
+#yt-eng-quiz .yt-eng-qz-mark.bad,
+#yt-eng-quiz .yt-eng-qz-bad { color: #ff6b6b; }
+#yt-eng-quiz .yt-eng-qz-muted { color: #888; }
+
+#yt-eng-quiz .yt-eng-qz-learn {
+  background: rgba(127, 255, 127, 0.12);
+  color: #7fff7f;
+  border: 1px solid rgba(127, 255, 127, 0.4);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+/* ---------- Cartoes Anki ---------- */
+
+.yt-eng-card-btn {
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #404040;
+  border-radius: 50%;
+  background: transparent;
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.yt-eng-card-btn:hover {
+  border-color: #3ea6ff;
+  color: #3ea6ff;
+}
+
+.yt-eng-card-btn.saved {
+  border-color: #3ea6ff;
+  background: #3ea6ff;
+  color: #0f0f0f;
+}
+
+#yt-eng-transcript .yt-eng-card-btn {
+  visibility: hidden;
+}
+
+#yt-eng-transcript .yt-eng-line:hover .yt-eng-card-btn,
+#yt-eng-transcript .yt-eng-card-btn.saved {
+  visibility: visible;
+}
+
+#yt-eng-overlay .yt-eng-ov-box {
+  position: relative;
+}
+
+#yt-eng-overlay .yt-eng-card-btn {
+  position: absolute;
+  top: 50%;
+  right: -30px;
+  transform: translateY(-50%);
+  background: rgba(8, 8, 8, 0.78);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+#yt-eng-overlay .yt-eng-ov-box:hover .yt-eng-card-btn,
+#yt-eng-overlay .yt-eng-card-btn.saved {
+  opacity: 1;
+}
+
+#yt-eng-toast {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 61;
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: rgba(8, 8, 8, 0.85);
+  color: #f1f1f1;
+  font-family: "Roboto", Arial, sans-serif;
+  font-size: 13px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#yt-eng-toast.show {
+  opacity: 1;
 }
