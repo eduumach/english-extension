@@ -12,7 +12,8 @@ package:
     zip -r "$outfile" \
         manifest.json \
         content.js content.css page-hook.js background.js llm.js \
-        popup.html popup.js popup.css \
+        popup.html popup.js popup.css common.js \
+        hub.html hub.js hub.css \
         icons
     echo ""
     echo "built: $outfile"

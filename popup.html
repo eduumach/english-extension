@@ -7,89 +7,40 @@
   <body>
     <header>
       <h1>
-        <svg class="app-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         English Study
       </h1>
-      <label class="power" title="Desative para assistir sem a extensao">
-        <input type="checkbox" data-setting="enabled" />
-        <span class="switch"></span>
-        <span id="power-label">Ativada</span>
+      <label class="switch" title="Desative para assistir sem a extensao">
+        <input type="checkbox" id="enabled" />
+        <span class="track"></span>
       </label>
     </header>
-    <div class="count">
-      <span id="total">0</span> palavras conhecidas
-    </div>
 
-    <div class="settings">
-      <label>
-        Idioma do dicionario
-        <select id="target-lang">
-          <option value="pt">Portugues</option>
-          <option value="es">Espanhol</option>
-          <option value="fr">Frances</option>
-          <option value="de">Alemao</option>
-          <option value="it">Italiano</option>
-          <option value="ja">Japones</option>
-        </select>
-      </label>
-      <label><input type="checkbox" data-setting="autoPause" /> Pausar ao fim de cada frase (Q)</label>
-      <label><input type="checkbox" data-setting="pauseOnHover" /> Pausar ao passar o mouse na legenda</label>
-      <label><input type="checkbox" data-setting="quizAfterVideo" /> Exercicios ao terminar o video</label>
-    </div>
+    <p class="state" id="state"></p>
 
-    <div class="progress" id="progress"></div>
-
-    <div class="cards">
-      <div class="cards-head">Cartoes Anki: <b id="cards-total">0</b> (<span id="cards-new">0</span> novos)</div>
-      <div class="row">
-        <button id="cards-export" title="Exporta os cartoes ainda nao exportados">Exportar novos</button>
-        <button id="cards-export-all">Exportar todos</button>
-        <button id="cards-clear" class="danger">Limpar</button>
-      </div>
-      <small>No video, clique no + de uma frase (ou tecle E). No Anki: Arquivo → Importar.</small>
-    </div>
-
-    <details class="llm" id="llm-section">
-      <summary>IA para exercicios <span id="llm-state"></span></summary>
-      <label>Chave da API <input id="llm-key" type="password" placeholder="sk-..." autocomplete="off" /></label>
-      <label>Modelo <input id="llm-model" type="text" /></label>
-      <label>URL base <input id="llm-url" type="text" /></label>
-      <div class="row">
-        <button id="llm-save">Salvar</button>
-        <button id="llm-test">Testar</button>
-        <span id="llm-msg"></span>
-      </div>
-      <small>Padrao: DeepSeek. Qualquer API compativel com OpenAI funciona trocando URL e modelo. A chave fica so neste navegador.</small>
-    </details>
-
-    <div class="row">
-      <input id="search" type="text" placeholder="Buscar palavra..." />
-      <input id="add-input" type="text" placeholder="Adicionar palavra" />
-      <button id="add-btn">+</button>
-    </div>
-
-    <div class="row actions">
-      <button id="export">Exportar JSON</button>
-      <button id="import">Importar JSON</button>
-      <button id="clear" class="danger">Limpar tudo</button>
-      <input type="file" id="file-input" accept="application/json" hidden />
-    </div>
-
-    <div class="row actions">
-      <button id="export-seen" title="Exportar todas as palavras vistas em videos, com frequencia">
-        Exportar vistas (<span id="seen-total">0</span>)
+    <div class="stats">
+      <button class="stat" data-open="vocab">
+        <b id="known" class="green">0</b><span>aprendidas</span>
       </button>
-      <button id="clear-seen" class="danger" title="Limpar historico de palavras vistas">Limpar vistas</button>
+      <button class="stat" data-open="cards">
+        <b id="cards-new" class="blue">0</b><span>cartoes novos</span>
+      </button>
+      <button class="stat" data-open="home">
+        <b id="accuracy">—</b><span>acerto</span>
+      </button>
     </div>
 
-    <ul id="list"></ul>
+    <button class="primary" data-open="">Abrir hub de estudo</button>
+    <button class="secondary" id="export-cards" hidden></button>
 
-    <footer>
-      Abra um video no YouTube com legendas. Clique numa palavra para marca-la
-      como aprendida; Shift+clique abre o dicionario.
-    </footer>
+    <button class="notice" id="llm-notice" data-open="settings" hidden>
+      Configure a IA para ter exercicios e cartoes automaticos →
+    </button>
+
+    <p class="hint">Abra um video com legendas no YouTube. Clique numa palavra para marca-la como aprendida.</p>
 
     <script src="llm.js"></script>
+    <script src="common.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -24,6 +24,10 @@ const handlers = {
   quiz: (msg) => generateQuiz(msg.items, msg.tl || "pt"),
   "ai-cards": (msg) => generateCards(msg.items, msg.unknown || [], msg.tl || "pt", msg.max || 8),
   "card-back": (msg) => cardBack(msg.sentence, msg.words || [], msg.tl || "pt"),
+  "open-hub": async () => {
+    await chrome.tabs.create({ url: chrome.runtime.getURL("hub.html") });
+    return { ok: true };
+  },
   "llm-status": async () => ({ configured: !!(await getLlmConfig()).apiKey }),
   "llm-test": async () => {
     await chatJSON([{ role: "user", content: 'Reply with the JSON {"ok": true}' }], {

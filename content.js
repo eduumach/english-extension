@@ -785,7 +785,7 @@ async function generateAiCards() {
   if (aiCardsBusy) return;
   aiCardsBusy = true;
   const videoId = currentVideoId;
-  const title = document.title.replace(/ - YouTube$/, "").trim();
+  const title = videoTitle();
   showToast("IA escolhendo frases para cartoes...", 60000);
   try {
     const unknown = videoNewWords();
@@ -814,7 +814,7 @@ async function generateAiCards() {
     if (!res || res.error) {
       showToast(
         res?.error === "no-api-key"
-          ? "Configure a IA no popup da extensao"
+          ? "Configure a IA no hub da extensao (Configuracoes)"
           : `Erro da IA: ${res?.error || "sem resposta"}`,
         4000,
       );
@@ -881,7 +881,7 @@ async function saveCard(i) {
     translation: back?.translation || "",
     wordNotes: back?.words || [],
     videoId: currentVideoId,
-    title: document.title.replace(/ - YouTube$/, "").trim(),
+    title: videoTitle(),
     time: Math.floor(line.start),
     ts: Date.now(),
     exported: false,
@@ -965,7 +965,7 @@ async function openQuiz() {
   if (!res || res.error) {
     quizMessage(
       res?.error === "no-api-key"
-        ? "Configure sua chave da API (DeepSeek) no popup da extensao."
+        ? "Configure sua chave da API no hub da extensao: icone da extensao → Abrir hub de estudo → Configuracoes."
         : `Erro ao gerar exercicios: ${res?.error || "sem resposta"}`,
     );
     return;
@@ -976,7 +976,7 @@ async function openQuiz() {
     picked: null,
     results: [],
     videoId: currentVideoId,
-    title: document.title.replace(/ - YouTube$/, "").trim(),
+    title: videoTitle(),
     wasKnown: new Map(items.map((it) => [it.word, knownWords.has(it.word)])),
     done: false,
   };
@@ -1140,21 +1140,40 @@ function createPanel() {
         English Study
       </span>
       <span class="yt-eng-header-actions">
-        <button class="yt-eng-btn-icon yt-eng-toggle-btn" data-setting="autoPause" title="Pausar ao fim de cada frase (Q)">Pausa auto</button>
-        <button class="yt-eng-btn-icon" id="yt-eng-practice" title="Exercicios com IA sobre as palavras deste video">Praticar</button>
-        <button class="yt-eng-btn-icon" id="yt-eng-ai-cards" title="A IA escolhe frases deste video e cria cartoes Anki">Cartoes IA</button>
-        <button class="yt-eng-btn-icon" id="yt-eng-power" title="Desativar a extensao (reative pelo popup)">
-          <svg class="yt-eng-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+        <button class="yt-eng-hbtn" id="yt-eng-help-btn" title="Ajuda e atalhos">?</button>
+        <button class="yt-eng-hbtn" id="yt-eng-power" title="Desativar a extensao (reative pelo icone da extensao)">
+          <svg class="yt-eng-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
         </button>
-        <button class="yt-eng-btn-icon" id="yt-eng-toggle" title="Minimizar">—</button>
+        <button class="yt-eng-hbtn" id="yt-eng-toggle" title="Minimizar">—</button>
       </span>
     </div>
     <div class="yt-eng-body">
+      <div class="yt-eng-hint-box" id="yt-eng-help" hidden>
+        <span class="yt-eng-dot yt-eng-known"></span>aprendida
+        <span class="yt-eng-dot yt-eng-seen"></span>ja vista
+        <span class="yt-eng-dot yt-eng-new"></span>nova<br>
+        <b>Clique</b> marca/desmarca como aprendida · <b>Shift+clique</b> dicionario<br>
+        <b>A</b>/<b>D</b> frase anterior/proxima · <b>S</b> repetir · <b>Q</b> pausa automatica · <b>E</b> cartao Anki<br>
+        <a href="#" id="yt-eng-open-hub">Abrir hub de estudo →</a>
+      </div>
+      <div class="yt-eng-actions">
+        <button class="yt-eng-action" id="yt-eng-practice" title="Exercicios com IA sobre as palavras deste video">
+          <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Praticar
+        </button>
+        <button class="yt-eng-action" id="yt-eng-ai-cards" title="A IA escolhe frases deste video e cria cartoes Anki">
+          <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="16" height="14" rx="2"/><path d="M6 2h14a2 2 0 0 1 2 2v12"/></svg>
+          Cartoes IA
+        </button>
+        <button class="yt-eng-action yt-eng-toggle-btn" data-setting="autoPause" title="Pausar ao fim de cada frase (Q)">
+          <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Pausa auto
+        </button>
+      </div>
       <div class="yt-eng-stats">
-        <div class="yt-eng-stat-known"><span id="yt-eng-known-count">0</span><small>aprendidas</small></div>
+        <div><span id="yt-eng-coverage">—</span><small>voce entende</small></div>
         <div class="yt-eng-stat-seen"><span id="yt-eng-seen-count">0</span><small>ja vistas</small></div>
         <div class="yt-eng-stat-new"><span id="yt-eng-new-count">0</span><small>novas</small></div>
-        <div><span id="yt-eng-coverage">—</span><small>voce entende</small></div>
       </div>
       <div class="yt-eng-status">
         <span id="yt-eng-status-text"></span>
@@ -1163,7 +1182,7 @@ function createPanel() {
       <div id="yt-eng-transcript"></div>
       <details class="yt-eng-section" id="yt-eng-new-section">
         <summary class="yt-eng-label-row">
-          <span class="yt-eng-label">Nao conhece neste video <small>(<span id="yt-eng-unknown-count">0</span>)</small></span>
+          <span class="yt-eng-label">Palavras que voce nao conhece <small>(<span id="yt-eng-unknown-count">0</span>)</small></span>
           <button class="yt-eng-btn-icon" id="yt-eng-export-video" title="Exportar as novas do video como .txt">
             <svg class="yt-eng-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar
@@ -1171,13 +1190,6 @@ function createPanel() {
         </summary>
         <div id="yt-eng-new-list" class="yt-eng-chips"></div>
       </details>
-      <div class="yt-eng-hint-box">
-        <span class="yt-eng-dot yt-eng-known"></span>aprendida
-        <span class="yt-eng-dot yt-eng-seen"></span>ja vista
-        <span class="yt-eng-dot yt-eng-new"></span>nova<br>
-        <b>Clique</b> marca/desmarca como aprendida · <b>Shift+clique</b> dicionario<br>
-        <b>A</b>/<b>D</b> frase anterior/proxima · <b>S</b> repetir · <b>Q</b> pausa automatica · <b>E</b> cartao Anki
-      </div>
     </div>
   `;
   document.body.appendChild(panel);
@@ -1193,6 +1205,15 @@ function createPanel() {
   panel.querySelector("#yt-eng-practice").addEventListener("click", openQuiz);
   panel.querySelector("#yt-eng-ai-cards").addEventListener("click", generateAiCards);
   panel.querySelector("#yt-eng-power").addEventListener("click", () => toggleSetting("enabled"));
+  panel.querySelector("#yt-eng-help-btn").addEventListener("click", () => {
+    const help = panel.querySelector("#yt-eng-help");
+    help.hidden = !help.hidden;
+    panel.querySelector("#yt-eng-help-btn").classList.toggle("on", !help.hidden);
+  });
+  panel.querySelector("#yt-eng-open-hub").addEventListener("click", (e) => {
+    e.preventDefault();
+    chrome.runtime.sendMessage({ type: "open-hub" });
+  });
   panel.querySelector("#yt-eng-enable-cc").addEventListener("click", () => {
     setStatus("waiting");
     postToHook({ type: "enable-captions", videoId: currentVideoId });
@@ -1256,6 +1277,14 @@ function highlightTranscript(idx) {
   }
 }
 
+// document.title minus the " - YouTube" suffix and the "(12) " notification counter.
+function videoTitle() {
+  return document.title
+    .replace(/ - YouTube$/, "")
+    .replace(/^\(\d+\+?\)\s*/, "")
+    .trim();
+}
+
 function sanitizeFilename(s) {
   return s.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").slice(0, 50);
 }
@@ -1287,7 +1316,7 @@ function exportVideoUnknown() {
     alert("Nenhuma palavra nova neste video ainda.");
     return;
   }
-  const rawTitle = document.title.replace(/ - YouTube$/, "").trim();
+  const rawTitle = videoTitle();
   const slug = sanitizeFilename(rawTitle) || currentVideoId || "video";
   downloadText(words.join("\n") + "\n", `novas-${slug}.txt`);
 }
@@ -1308,7 +1337,6 @@ function updatePanel() {
     total += c;
     if (knownWords.has(w)) known += c;
   }
-  panel.querySelector("#yt-eng-known-count").textContent = knownWords.size;
   panel.querySelector("#yt-eng-seen-count").textContent = seenCount;
   panel.querySelector("#yt-eng-new-count").textContent = newOnes.length - seenCount;
   panel.querySelector("#yt-eng-unknown-count").textContent = newOnes.length;

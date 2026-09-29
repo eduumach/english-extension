@@ -21,9 +21,13 @@ Clique em qualquer palavra direto na legenda para marcá-la como conhecida (ou d
 - O painel lateral mostra a transcricao inteira: clique numa frase para pular ate ela.
 - Clique numa palavra para marca-la como aprendida (ou desmarcar); **Shift+clique** abre o dicionario.
 - Atalhos: **A**/**D** frase anterior/proxima, **S** repetir frase, **Q** pausa automatica ao fim de cada frase.
-- No popup da extensao voce escolhe o idioma do dicionario e gerencia (pesquisa, adiciona, exporta/importa) a lista de palavras conhecidas.
+- O popup da extensao mostra um resumo e o botao **Abrir hub de estudo**. No hub voce tem:
+  - **Inicio:** numeros, primeiros passos, exercicios recentes e atalhos;
+  - **Vocabulario:** palavras para estudar (vistas e ainda nao aprendidas, por frequencia) e aprendidas;
+  - **Cartoes Anki:** lista dos cartoes, exportar e apagar;
+  - **Configuracoes:** idioma, pausas, IA, backup e apagar dados.
 
-- Para assistir sem a extensao, desligue no popup (ou no botao de energia do painel): a legenda do YouTube volta ao normal e o icone mostra "OFF".
+- Para assistir sem a extensao, desligue no popup/hub (ou no botao de energia do painel): a legenda do YouTube volta ao normal e o icone mostra "OFF".
 
 ## Cartoes Anki
 
@@ -34,7 +38,7 @@ Clique no **+** de uma frase (na legenda ou na transcricao) ou tecle **E**. O ca
 
 Ou clique em **Cartoes IA** no painel: a IA le a transcricao e cria ate 8 cartoes com as frases mais uteis para voce (palavras que voce nao sabe, phrasal verbs, expressoes), com traducao e explicacao do trecho em foco.
 
-No popup, **Exportar novos** gera um `.txt` pronto para o Anki (Arquivo → Importar).
+No popup ou no hub (**Cartoes Anki**), **Exportar novos** gera um `.txt` pronto para o Anki (Arquivo → Importar).
 
 ## Exercicios com IA
 
@@ -48,13 +52,15 @@ Responda com **1–4** e avance com **Enter**. No resultado:
 - palavra "aprendida" que voce errou volta para estudo automaticamente;
 - palavra que voce nao sabia e acertou ganha um botao **Marcar como aprendida**.
 
-O popup mostra o historico e a taxa de acerto. Para configurar, abra o popup → **IA para exercicios**, cole sua chave da [DeepSeek](https://platform.deepseek.com/api_keys) e clique em **Testar**. Qualquer API compativel com OpenAI (`/chat/completions`) funciona trocando a URL base e o modelo.
+O hub mostra o historico e a taxa de acerto. Para configurar, abra o hub → **Configuracoes** → **Inteligencia artificial**, cole sua chave da [DeepSeek](https://platform.deepseek.com/api_keys) e clique em **Testar**. Qualquer API compativel com OpenAI (`/chat/completions`) funciona trocando a URL base e o modelo.
 
 ## Arquivos
 
 - `manifest.json` — manifest MV3
 - `page-hook.js` — roda no contexto da pagina e captura a requisicao `timedtext` do player para obter a faixa completa
 - `content.js` / `content.css` — overlay de legenda, transcricao, popup de palavra, exercicios, atalhos; colore `.ytp-caption-segment` como fallback
-- `llm.js` — cliente de chat compativel com OpenAI (DeepSeek por padrao), usado pelo background e pelo popup
+- `llm.js` — cliente de chat compativel com OpenAI (DeepSeek por padrao), usado pelo background, popup e hub
 - `background.js` — dicionario (Google Translate + dictionaryapi.dev) e geracao dos exercicios via LLM
-- `popup.html` / `popup.js` / `popup.css` — configuracoes e gerenciamento do vocabulario
+- `popup.html` / `popup.js` / `popup.css` — resumo rapido e atalho para o hub
+- `hub.html` / `hub.js` / `hub.css` — hub de estudo (pagina de opcoes da extensao)
+- `common.js` — chaves de storage e helpers compartilhados (export Anki, downloads)

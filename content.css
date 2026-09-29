@@ -129,18 +129,14 @@
 }
 
 #yt-eng-ext-panel .yt-eng-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #aaa;
+  font-size: 12px;
+  color: #ccc;
   margin-bottom: 6px;
 }
 
 #yt-eng-ext-panel .yt-eng-label small {
-  text-transform: none;
-  letter-spacing: normal;
   color: #777;
-  font-size: 10px;
+  font-size: 11px;
   margin-left: 4px;
 }
 
@@ -207,14 +203,75 @@
   border-left: 3px solid #3ea6ff;
 }
 
-#yt-eng-ext-panel .yt-eng-header-actions {
-  display: inline-flex;
-  gap: 4px;
+#yt-eng-ext-panel .yt-eng-hint-box[hidden] {
+  display: none;
 }
 
-#yt-eng-ext-panel .yt-eng-toggle-btn.on {
-  background: #3ea6ff;
-  color: #0f0f0f;
+#yt-eng-ext-panel .yt-eng-hint-box a {
+  color: #3ea6ff;
+  text-decoration: none;
+}
+
+#yt-eng-ext-panel .yt-eng-header-actions {
+  display: inline-flex;
+  gap: 2px;
+}
+
+/* Square icon buttons in the header */
+#yt-eng-ext-panel .yt-eng-hbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #aaa;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#yt-eng-ext-panel .yt-eng-hbtn:hover,
+#yt-eng-ext-panel .yt-eng-hbtn.on {
+  background: #303030;
+  color: #f1f1f1;
+}
+
+/* Main actions row */
+#yt-eng-ext-panel .yt-eng-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+#yt-eng-ext-panel .yt-eng-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 4px;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  background: #1c1c1c;
+  color: #f1f1f1;
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#yt-eng-ext-panel .yt-eng-action:hover {
+  background: #2a2a2a;
+}
+
+#yt-eng-ext-panel .yt-eng-action.on {
+  border-color: #3ea6ff;
+  background: #1f2a36;
+  color: #3ea6ff;
 }
 
 #yt-eng-ext-panel.has-track {
@@ -306,10 +363,6 @@
   background: rgba(255, 158, 94, 0.15);
   color: #ff9e5e;
   border-color: rgba(255, 158, 94, 0.35);
-}
-
-#yt-eng-ext-panel .yt-eng-stat-known span {
-  color: #7fff7f;
 }
 
 #yt-eng-ext-panel .yt-eng-stat-seen span {
