@@ -1,24 +1,26 @@
-import { Download, Trash2 } from "lucide-react";
+import { PlayCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  CARDS_KEY,
   WORD_RE,
   cleanTitle,
-  exportCards,
+  dueCards,
   fmtTime,
+  fmtUntil,
+  isDue,
   normalizeWord,
+  updateCards,
   videoLink,
   type Card,
 } from "@/lib/common";
-import { setStorage } from "@/lib/use-storage";
+import { cn } from "@/lib/utils";
 import type { HubData } from "../data";
+import { ReviewSession, ReviewStart } from "../review";
 
 // Sentence with the card's focus words in bold.
-function CardFront({ card }: { card: Card }) {
+function CardFront({ card, className }: { card: Card; className?: string }) {
   const words = new Set(card.words || []);
   const parts: (string | { b: string })[] = [];
   let last = 0;
@@ -29,101 +31,163 @@ function CardFront({ card }: { card: Card }) {
   }
   parts.push(card.sentence.slice(last));
   return (
-    <p className="text-base">
+    <p className={cn("text-base", className)}>
       {parts.map((p, i) => (typeof p === "string" ? p : <b key={i} className="text-study">{p.b}</b>))}
     </p>
   );
 }
 
+function CardBack({ card }: { card: Card }) {
+  return (
+    <>
+      {card.translation && <p className="text-muted-foreground">{card.translation}</p>}
+      {!!card.wordNotes?.length && (
+        <p className="text-xs">
+          {card.wordNotes.map((n, i) => (
+            <span key={i}>
+              {i > 0 && " · "}
+              <b>{n.word}</b>: <span className="text-muted-foreground">{n.tr}</span>
+            </span>
+          ))}
+        </p>
+      )}
+    </>
+  );
+}
+
+function VideoLink({ card }: { card: Card }) {
+  return (
+    <a className="truncate text-info hover:underline" href={videoLink(card)} target="_blank" rel="noopener">
+      {cleanTitle(card.title) || "YouTube"} · {fmtTime(card.time)}
+    </a>
+  );
+}
+
+function deleteCard(key: string) {
+  return updateCards((cards) => cards.filter((c) => c.key !== key));
+}
+
+function Review({ cards, queue, onQueue }: { cards: Card[]; queue: string[]; onQueue: (q: string[] | null) => void }) {
+  const byKey = new Map(cards.map((c) => [c.key, c]));
+  return (
+    <ReviewSession
+      queue={queue}
+      onQueue={onQueue}
+      srs={(k) => (byKey.has(k) ? byKey.get(k)!.srs : null)}
+      front={(k) => <CardFront card={byKey.get(k)!} className="text-xl leading-relaxed" />}
+      back={(k) => {
+        const card = byKey.get(k)!;
+        return (
+          <>
+            <CardBack card={card} />
+            <div className="flex items-center gap-2 text-xs">
+              <a
+                className="flex shrink-0 items-center gap-1.5 text-info hover:underline"
+                href={videoLink(card)}
+                target="_blank"
+                rel="noopener"
+              >
+                <PlayCircle className="size-4" />
+                Ouvir no vídeo
+              </a>
+              <span className="truncate text-muted-foreground">
+                {cleanTitle(card.title) || "YouTube"} · {fmtTime(card.time)}
+              </span>
+            </div>
+          </>
+        );
+      }}
+      onGrade={(k, srs) => updateCards((all) => all.map((c) => (c.key === k ? { ...c, srs } : c)))}
+    />
+  );
+}
+
 export default function CardsPage({ data }: { data: HubData }) {
   const { cards } = data;
-  const [filter, setFilter] = useState<"new" | "all">("new");
-  const fresh = cards.filter((c) => !c.exported);
-  const list = (filter === "new" ? fresh : cards).slice().reverse();
-
-  async function onExport(onlyNew: boolean) {
-    const n = await exportCards(onlyNew);
-    toast(n ? `${n} cartões exportados` : "Nenhum cartão para exportar");
-  }
+  const [tab, setTab] = useState<"review" | "all">("review");
+  const [queue, setQueue] = useState<string[] | null>(null);
+  const now = Date.now();
+  const due = dueCards(cards, now);
+  const fresh = due.filter((c) => !c.srs).length;
+  const upcoming = cards.filter((c) => !isDue(c, now)).sort((a, b) => a.srs!.due - b.srs!.due)[0];
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-2xl font-semibold">Cartões Anki</h2>
+      <h2 className="text-2xl font-semibold">Cartões</h2>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as "new" | "all")}>
-          <TabsList>
-            <TabsTrigger value="new">
-              Novos <span className="text-muted-foreground">{fresh.length}</span>
-            </TabsTrigger>
-            <TabsTrigger value="all">
-              Todos <span className="text-muted-foreground">{cards.length}</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <span className="flex-1" />
-        <Button disabled={!fresh.length} onClick={() => onExport(true)}>
-          <Download />
-          {fresh.length ? `Exportar ${fresh.length} ${fresh.length === 1 ? "novo" : "novos"}` : "Exportar novos"}
-        </Button>
-        <Button variant="outline" disabled={!cards.length} onClick={() => onExport(false)}>
-          Exportar todos
-        </Button>
-      </div>
-      <p className="text-muted-foreground">
-        O arquivo .txt abre direto no Anki em <b>Arquivo → Importar</b>. Depois de exportado, o cartão sai de "Novos".
-      </p>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "review" | "all")}>
+        <TabsList>
+          <TabsTrigger value="review">
+            Revisar <span className="text-muted-foreground">{due.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="all">
+            Todos <span className="text-muted-foreground">{cards.length}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      {!list.length ? (
-        <div className="rounded-xl border bg-card px-4 py-8 text-center text-muted-foreground">
-          {cards.length ? (
-            <>Todos os cartões já foram exportados. Veja em <b>Todos</b>.</>
-          ) : (
-            <>
-              Nenhum cartão ainda. No vídeo, clique no <b>+</b> de uma frase (ou tecle <kbd>E</kbd>), ou use{" "}
-              <b>Cartões IA</b> no painel para a IA escolher as melhores frases.
-            </>
-          )}
-        </div>
-      ) : (
+      {tab === "review" &&
+        (queue ? (
+          <Review cards={cards} queue={queue} onQueue={setQueue} />
+        ) : due.length ? (
+          <ReviewStart
+            count={due.length}
+            fresh={fresh}
+            onStart={() => setQueue(due.map((c) => c.key))}
+            hint="Leia a frase, tente entender e revele a resposta. Quanto melhor você for, mais tempo até o cartão voltar."
+          />
+        ) : (
+          <div className="rounded-xl border bg-card px-4 py-8 text-center text-muted-foreground">
+            {cards.length ? (
+              <>
+                Nada para revisar agora.
+                {upcoming && <> Próximo cartão em {fmtUntil(upcoming.srs!.due, now)}.</>}
+              </>
+            ) : (
+              <>
+                Nenhum cartão ainda. No vídeo, clique no <b>+</b> de uma frase (ou tecle <kbd>E</kbd>), ou use{" "}
+                <b>Cartões IA</b> no painel para a IA escolher as melhores frases.
+              </>
+            )}
+          </div>
+        ))}
+
+      {tab === "all" && (
         <div className="flex flex-col gap-3">
-          {list.map((c) => (
-            <article key={c.key} className="flex flex-col gap-2 rounded-xl border bg-card p-4">
-              <CardFront card={c} />
-              {c.translation && <p className="text-muted-foreground">{c.translation}</p>}
-              {!!c.wordNotes?.length && (
-                <p className="text-xs">
-                  {c.wordNotes.map((n, i) => (
-                    <span key={i}>
-                      {i > 0 && " · "}
-                      <b>{n.word}</b>: <span className="text-muted-foreground">{n.tr}</span>
-                    </span>
-                  ))}
-                </p>
-              )}
-              <div className="flex items-center gap-2 text-xs">
-                {!c.exported && <Badge className="bg-info text-background">novo</Badge>}
-                {c.source === "ai" && <Badge variant="secondary">IA</Badge>}
-                <a
-                  className="truncate text-info hover:underline"
-                  href={videoLink(c)}
-                  target="_blank"
-                  rel="noopener"
-                >
-                  {cleanTitle(c.title) || "YouTube"} · {fmtTime(c.time)}
-                </a>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-auto text-muted-foreground"
-                  onClick={() => setStorage(CARDS_KEY, cards.filter((x) => x.key !== c.key))}
-                >
-                  <Trash2 />
-                  Apagar
-                </Button>
-              </div>
-            </article>
-          ))}
+          {!cards.length && (
+            <div className="rounded-xl border bg-card px-4 py-8 text-center text-muted-foreground">
+              Nenhum cartão ainda.
+            </div>
+          )}
+          {cards
+            .slice()
+            .reverse()
+            .map((c) => (
+              <article key={c.key} className="flex flex-col gap-2 rounded-xl border bg-card p-4">
+                <CardFront card={c} />
+                <CardBack card={c} />
+                <div className="flex items-center gap-2 text-xs">
+                  {!c.srs ? (
+                    <Badge className="bg-info text-background">novo</Badge>
+                  ) : (
+                    <Badge variant="secondary">
+                      {isDue(c, now) ? "para revisar" : `volta em ${fmtUntil(c.srs.due, now)}`}
+                    </Badge>
+                  )}
+                  {c.source === "ai" && <Badge variant="secondary">IA</Badge>}
+                  <VideoLink card={c} />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto text-muted-foreground"
+                    onClick={() => deleteCard(c.key)}
+                  >
+                    <Trash2 />
+                    Apagar
+                  </Button>
+                </div>
+              </article>
+            ))}
         </div>
       )}
     </div>

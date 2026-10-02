@@ -6,10 +6,12 @@ import {
   SEEN_KEY,
   SETTINGS_KEY,
   STORAGE_KEY,
+  WORD_SRS_KEY,
   WORD_STATS_KEY,
   type Card,
   type QuizResult,
   type Settings,
+  type WordSrs,
   type WordStats,
 } from "@/lib/common";
 import { LLM_KEY, getLlmConfig, type LlmConfig } from "@/lib/llm";
@@ -22,6 +24,7 @@ export function useHubData() {
   const [seen] = useStorage<Record<string, number>>(SEEN_KEY, {});
   const [wordStats] = useStorage<WordStats>(WORD_STATS_KEY, {});
   const [cards] = useStorage<Card[]>(CARDS_KEY, []);
+  const [wordSrs] = useStorage<WordSrs>(WORD_SRS_KEY, {});
   const [history] = useStorage<QuizResult[]>(QUIZ_HISTORY_KEY, []);
   const [storedSettings] = useStorage<Partial<Settings>>(SETTINGS_KEY, {});
   const [storedLlm] = useStorage(LLM_KEY, {});
@@ -44,6 +47,7 @@ export function useHubData() {
     seen,
     wordStats,
     cards,
+    wordSrs,
     history,
     settings,
     llm,

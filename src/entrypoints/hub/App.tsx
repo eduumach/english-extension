@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/sonner";
+import { dueCards, dueWords } from "@/lib/common";
 import { cn } from "@/lib/utils";
 import { useHubData } from "./data";
 import CardsPage from "./pages/Cards";
@@ -13,7 +14,7 @@ import VocabPage, { type VocabTab } from "./pages/Vocab";
 const PAGES = [
   { id: "home", label: "Início", icon: Home },
   { id: "vocab", label: "Vocabulário", icon: Type },
-  { id: "cards", label: "Cartões Anki", icon: Layers },
+  { id: "cards", label: "Cartões", icon: Layers },
   { id: "settings", label: "Configurações", icon: SettingsIcon },
 ] as const;
 
@@ -38,7 +39,10 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const freshCards = data.cards.filter((c) => !c.exported).length;
+  const badges: Partial<Record<Page, number>> = {
+    vocab: dueWords(data.studyWords, data.wordSrs).review.length,
+    cards: dueCards(data.cards).length,
+  };
   const { enabled } = data.settings;
 
   return (
@@ -60,9 +64,7 @@ export default function App() {
             >
               <Icon className="size-4" />
               {label}
-              {id === "cards" && freshCards > 0 && (
-                <Badge className="ml-auto bg-info text-background">{freshCards}</Badge>
-              )}
+              {!!badges[id] && <Badge className="ml-auto bg-info text-background">{badges[id]}</Badge>}
             </a>
           ))}
         </nav>

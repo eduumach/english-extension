@@ -9,7 +9,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CARDS_KEY, SEEN_KEY, STORAGE_KEY, downloadFile, today, type Settings } from "@/lib/common";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  CARDS_KEY,
+  SEEN_KEY,
+  STORAGE_KEY,
+  exportBackup,
+  parseBackup,
+  restoreBackup,
+  type Backup,
+  type Card as StudyCard,
+  type Settings,
+} from "@/lib/common";
 import { DEFAULT_LLM, LLM_KEY } from "@/lib/llm";
 import { setStorage } from "@/lib/use-storage";
 import { ConfirmButton } from "../confirm-button";
@@ -21,7 +41,7 @@ const LANGS: [string, string][] = [
   ["fr", "Francês"],
   ["de", "Alemão"],
   ["it", "Italiano"],
-  ["já", "Japonês"],
+  ["ja", "Japonês"],
 ];
 
 const TOGGLES: [keyof Settings, string, string][] = [
@@ -143,33 +163,32 @@ function LlmCard({ data }: { data: HubData }) {
   );
 }
 
-export default function SettingsPage({ data }: { data: HubData }) {
-  const { settings, saveSettings, known, seen, saveKnown } = data;
-  const fileRef = useRef<HTMLInputElement>(null);
+function backupSummary({ data, legacy }: Backup) {
+  const known = (data[STORAGE_KEY] as string[] | undefined)?.length || 0;
+  if (legacy) return `${known} palavras aprendidas serão somadas às suas.`;
+  const cards = (data[CARDS_KEY] as StudyCard[] | undefined)?.length || 0;
+  const seen = Object.keys((data[SEEN_KEY] as object | undefined) || {}).length;
+  return `${known} palavras aprendidas, ${seen} vistas e ${cards} cartões. Isso substitui os dados atuais.`;
+}
 
-  async function importKnown(file: File) {
+export default function SettingsPage({ data }: { data: HubData }) {
+  const { settings, saveSettings } = data;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pending, setPending] = useState<Backup | null>(null);
+
+  async function pickFile(file: File) {
     try {
-      const arr = JSON.parse(await file.text());
-      if (!Array.isArray(arr)) throw new Error("o JSON precisa ser uma lista de palavras");
-      const next = new Set(known);
-      for (const w of arr) if (typeof w === "string" && w) next.add(w.toLowerCase());
-      await saveKnown(next);
-      toast(`${next.size - known.size} palavras novas importadas`);
+      setPending(parseBackup(await file.text()));
     } catch (err) {
       toast(`Erro ao importar: ${(err as Error).message}`);
     }
   }
 
-  function exportSeen() {
-    const entries = Object.entries(seen).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    if (!entries.length) {
-      toast("Nenhuma palavra vista ainda");
-      return;
-    }
-    downloadFile(
-      "palavra\tvezes\n" + entries.map(([w, c]) => `${w}\t${c}`).join("\n") + "\n",
-      `vistas-${today()}.txt`,
-    );
+  async function restore() {
+    if (!pending) return;
+    await restoreBackup(pending);
+    setPending(null);
+    toast("Backup restaurado");
   }
 
   async function clear(value: Record<string, unknown>) {
@@ -213,35 +232,47 @@ export default function SettingsPage({ data }: { data: HubData }) {
       <Card>
         <CardHeader>
           <CardTitle>Backup</CardTitle>
+          <CardDescription>
+            Um arquivo com tudo: palavras, cartões, progresso das revisões, exercícios e configurações. A chave da IA
+            não vai junto.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={() =>
-              downloadFile(JSON.stringify([...known].sort(), null, 2), `known-words-${today()}.json`, "application/json")
-            }
-          >
-            Exportar aprendidas (.json)
+          <Button variant="outline" onClick={exportBackup}>
+            Exportar backup
           </Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
-            Importar aprendidas (.json)
-          </Button>
-          <Button variant="outline" onClick={exportSeen}>
-            Exportar vistas com frequência (.txt)
+            Importar backup
           </Button>
           <input
             ref={fileRef}
             type="file"
-            accept="application/json"
+            accept="application/json,.json"
             hidden
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              if (file) importKnown(file);
+              if (file) pickFile(file);
             }}
           />
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!pending} onOpenChange={(open) => !open && setPending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Restaurar backup
+              {pending?.exportedAt && ` de ${new Date(pending.exportedAt).toLocaleDateString("pt-BR")}`}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>{pending && backupSummary(pending)}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={restore}>Restaurar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Card className="border-destructive/30">
         <CardHeader>

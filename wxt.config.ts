@@ -17,6 +17,8 @@ export default defineConfig({
       "https://www.youtube.com/*",
       "https://translate.googleapis.com/*",
       "https://api.dictionaryapi.dev/*",
+      "https://tatoeba.org/*",
+      "https://api.tatoeba.org/*",
       "https://api.deepseek.com/*",
     ],
     optional_host_permissions: ["https://*/*"],

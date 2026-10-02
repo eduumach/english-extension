@@ -25,6 +25,7 @@ export default defineBackground(() => {
     quiz: (msg) => generateQuiz(msg.items, msg.tl || "pt"),
     "ai-cards": (msg) => generateCards(msg.items, msg.unknown || [], msg.tl || "pt", msg.max || 8),
     "card-back": (msg) => cardBack(msg.sentence, msg.words || [], msg.tl || "pt"),
+    examples: (msg) => examples(msg.word, msg.tl || "pt"),
     "open-hub": async () => {
       await chrome.tabs.create({ url: chrome.runtime.getURL("/hub.html") });
       return { ok: true };
@@ -100,10 +101,25 @@ export default defineBackground(() => {
     return { translation, alternatives };
   }
 
+  // dictionaryapi.dev sometimes hangs for ~20s before failing; the lookup waits for it,
+  // so cap the wait and skip it for a while once it looks down.
+  const DICT_TIMEOUT_MS = 2500;
+  const DICT_BACKOFF_MS = 5 * 60_000;
+  let dictDownUntil = 0;
+
   async function defineWord(word) {
-    const res = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
-    );
+    if (Date.now() < dictDownUntil) return null;
+    let res;
+    try {
+      res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+        { signal: AbortSignal.timeout(DICT_TIMEOUT_MS) },
+      );
+    } catch (err) {
+      dictDownUntil = Date.now() + DICT_BACKOFF_MS;
+      throw err;
+    }
+    if (res.status >= 500) dictDownUntil = Date.now() + DICT_BACKOFF_MS;
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const entries = await res.json();
     const entry = entries[0];
@@ -121,6 +137,49 @@ export default defineBackground(() => {
       }
     }
     return { phonetic, definitions: definitions.slice(0, 4) };
+  }
+
+  // Tatoeba uses ISO 639-3 codes.
+  const TATOEBA_LANGS = { pt: "por", es: "spa", fr: "fra", de: "deu", it: "ita", ja: "jpn" };
+  const exampleCache = new Map();
+
+  // Example sentences with the word, from Tatoeba (free, human-written, with translations).
+  // -> { examples: [{ text, translation }] }
+  async function examples(word, tl) {
+    const key = `${word}|${tl}`;
+    if (exampleCache.has(key)) return exampleCache.get(key);
+    const to = TATOEBA_LANGS[tl] || "por";
+    // The legacy search matches the exact word; the newer API stems it ("reluctant" ->
+    // "reluctantly"), so it's only the fallback.
+    let list = (await tatoebaLegacy(word, to).catch(() => [])).filter((e) => e.translation);
+    if (!list.length) list = (await tatoebaNew(word, to).catch(() => [])).filter((e) => e.translation);
+    const result = { examples: list.slice(0, 5) };
+    exampleCache.set(key, result);
+    return result;
+  }
+
+  function pickTranslation(translations, to) {
+    return translations.flat().find((t) => t?.lang === to)?.text || "";
+  }
+
+  async function tatoebaLegacy(word, to) {
+    const url =
+      "https://tatoeba.org/en/api_v0/search?from=eng&orphans=no&unapproved=no&sort=relevance" +
+      `&to=${to}&query=${encodeURIComponent(`=${word}`)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return (data.results || []).map((r) => ({ text: r.text, translation: pickTranslation(r.translations || [], to) }));
+  }
+
+  async function tatoebaNew(word, to) {
+    const url =
+      "https://api.tatoeba.org/unstable/sentences?lang=eng&sort=relevance&limit=10" +
+      `&trans:lang=${to}&q=${encodeURIComponent(word)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return (data.data || []).map((r) => ({ text: r.text, translation: pickTranslation(r.translations || [], to) }));
   }
 
   const LANG_NAMES = {
@@ -192,7 +251,7 @@ export default defineBackground(() => {
   async function generateCards(items, unknown, tl, max) {
     const lang = LANG_NAMES[tl] || LANG_NAMES.pt;
     const system =
-      `You are an English tutor helping a ${lang} speaker build Anki flashcards from a YouTube transcript. ` +
+      `You are an English tutor helping a ${lang} speaker build flashcards from a YouTube transcript. ` +
       "Respond only with JSON.";
     const user = `Pick up to ${max} of the most useful sentences from the transcript for this learner.
   Prefer sentences with words from the "unknown words" list, phrasal verbs, idioms or collocations worth learning. Skip filler, greetings and broken fragments.

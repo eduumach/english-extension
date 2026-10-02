@@ -545,7 +545,7 @@ export default defineContentScript({
       ov = document.createElement("div");
       ov.id = "yt-eng-overlay";
       ov.className = "empty";
-      ov.innerHTML = `<div class="yt-eng-ov-box"><div class="yt-eng-ov-text"></div><button class="yt-eng-card-btn" title="Criar cartão Anki (E)">+</button></div>`;
+      ov.innerHTML = `<div class="yt-eng-ov-box"><div class="yt-eng-ov-text"></div><button class="yt-eng-card-btn" title="Criar cartão (E)">+</button></div>`;
       player.appendChild(ov);
       const box = ov.querySelector(".yt-eng-ov-box");
       box.addEventListener("mouseenter", () => {
@@ -745,7 +745,7 @@ export default defineContentScript({
 
     document.addEventListener("click", onDocumentClick, true);
 
-    /* ---------- Anki sentence cards ---------- */
+    /* ---------- Sentence cards ---------- */
 
     function cardKey(i) {
       return lines[i] ? `${currentVideoId}|${lines[i].startMs}` : "";
@@ -846,7 +846,6 @@ export default defineContentScript({
             title,
             time: Math.floor(lines[start].start),
             ts: Date.now(),
-            exported: false,
             source: "ai",
           });
         }
@@ -861,8 +860,8 @@ export default defineContentScript({
       }
     }
 
-    // Front: the sentence (unknown words get highlighted on export).
-    // Back: sentence translation + meaning of those words, fetched now so export is instant.
+    // Front: the sentence (unknown words get highlighted in review).
+    // Back: sentence translation + meaning of those words, fetched now so review is instant.
     async function saveCard(i) {
       const line = lines[i];
       const key = cardKey(i);
@@ -890,7 +889,6 @@ export default defineContentScript({
         title: videoTitle(),
         time: Math.floor(line.start),
         ts: Date.now(),
-        exported: false,
       };
       await appendCards([card]);
       showToast(card.translation ? "Cartão criado" : "Cartão criado (sem tradução)");
@@ -1159,7 +1157,7 @@ export default defineContentScript({
             <span class="yt-eng-dot yt-eng-seen"></span>já vista
             <span class="yt-eng-dot yt-eng-new"></span>nova<br>
             <b>Clique</b> marca/desmarca como aprendida · <b>Shift+clique</b> dicionário<br>
-            <b>A</b>/<b>D</b> frase anterior/próxima · <b>S</b> repetir · <b>Q</b> pausa automática · <b>E</b> cartão Anki<br>
+            <b>A</b>/<b>D</b> frase anterior/próxima · <b>S</b> repetir · <b>Q</b> pausa automática · <b>E</b> cartão<br>
             <a href="#" id="yt-eng-open-hub">Abrir hub de estudo →</a>
           </div>
           <div class="yt-eng-actions">
@@ -1167,7 +1165,7 @@ export default defineContentScript({
               <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               Praticar
             </button>
-            <button class="yt-eng-action" id="yt-eng-ai-cards" title="A IA escolhe frases deste vídeo e cria cartões Anki">
+            <button class="yt-eng-action" id="yt-eng-ai-cards" title="A IA escolhe frases deste vídeo e cria cartões">
               <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="16" height="14" rx="2"/><path d="M6 2h14a2 2 0 0 1 2 2v12"/></svg>
               Cartões IA
             </button>
@@ -1262,7 +1260,7 @@ export default defineContentScript({
             `<div class="yt-eng-line${i === activeIdx ? " active" : ""}" data-yt-eng-line="${i}">` +
             `<span class="yt-eng-time">${fmtTime(l.start)}</span>` +
             `<div class="yt-eng-line-body">${buildSegmentHTML(l.text)}</div>` +
-            `<button class="yt-eng-card-btn${savedCardKeys.has(cardKey(i)) ? " saved" : ""}" data-card="${i}" title="Criar cartão Anki (E)">+</button></div>`,
+            `<button class="yt-eng-card-btn${savedCardKeys.has(cardKey(i)) ? " saved" : ""}" data-card="${i}" title="Criar cartão (E)">+</button></div>`,
         )
         .join("");
     }

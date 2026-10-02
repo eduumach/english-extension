@@ -23,13 +23,13 @@ Clique em qualquer palavra direto na legenda para marcá-la como conhecida (ou d
 - Atalhos: **A**/**D** frase anterior/proxima, **S** repetir frase, **Q** pausa automatica ao fim de cada frase.
 - O popup da extensao mostra um resumo e o botao **Abrir hub de estudo**. No hub voce tem:
   - **Inicio:** numeros, primeiros passos, exercicios recentes e atalhos;
-  - **Vocabulario:** palavras para estudar (vistas e ainda nao aprendidas, por frequencia) e aprendidas;
-  - **Cartoes Anki:** lista dos cartoes, exportar e apagar;
+  - **Vocabulario:** palavras para estudar (vistas e ainda nao aprendidas, por frequencia) e aprendidas, com flashcards das palavras para estudar (frase de exemplo do [Tatoeba](https://tatoeba.org) com traducao; mesma repeticao espacada dos cartoes; ate 10 palavras novas por sessao, e a palavra que chega a 21 dias de intervalo vai para aprendidas);
+  - **Cartoes:** revisao com repeticao espacada e lista de todos os cartoes;
   - **Configuracoes:** idioma, pausas, IA, backup e apagar dados.
 
 - Para assistir sem a extensao, desligue no popup/hub (ou no botao de energia do painel): a legenda do YouTube volta ao normal e o icone mostra "OFF".
 
-## Cartoes Anki
+## Cartoes
 
 Clique no **+** de uma frase (na legenda ou na transcricao) ou tecle **E**. O cartao guarda:
 
@@ -38,7 +38,7 @@ Clique no **+** de uma frase (na legenda ou na transcricao) ou tecle **E**. O ca
 
 Ou clique em **Cartoes IA** no painel: a IA le a transcricao e cria ate 8 cartoes com as frases mais uteis para voce (palavras que voce nao sabe, phrasal verbs, expressoes), com traducao e explicacao do trecho em foco.
 
-No popup ou no hub (**Cartoes Anki**), **Exportar novos** gera um `.txt` pronto para o Anki (Arquivo → Importar).
+A revisao acontece no proprio hub (**Cartoes**), com repeticao espacada (SM-2, como no Anki): leia a frase, revele a resposta (**Espaco**) e avalie com **1–4** (Errei / Dificil / Bom / Facil). Cada botao mostra quando o cartao volta. **Ouvir no video** abre o trecho exato no YouTube. O popup e o menu do hub mostram quantos cartoes estao para revisar.
 
 ## Exercicios com IA
 
@@ -63,4 +63,4 @@ O hub mostra o historico e a taxa de acerto. Para configurar, abra o hub → **C
 - `background.js` — dicionario (Google Translate + dictionaryapi.dev) e geracao dos exercicios via LLM
 - `popup.html` / `popup.js` / `popup.css` — resumo rapido e atalho para o hub
 - `hub.html` / `hub.js` / `hub.css` — hub de estudo (pagina de opcoes da extensao)
-- `common.js` — chaves de storage e helpers compartilhados (export Anki, downloads)
+- `common.js` — chaves de storage e helpers compartilhados (repeticao espacada, downloads)

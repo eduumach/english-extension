@@ -8,7 +8,7 @@ import {
   QUIZ_HISTORY_KEY,
   SETTINGS_KEY,
   STORAGE_KEY,
-  exportCards,
+  dueCards,
   openHub,
   quizAccuracy,
   type Card,
@@ -59,7 +59,7 @@ export default function App() {
   }, [llmCfg]);
 
   const settings = { ...DEFAULT_SETTINGS, ...stored };
-  const fresh = cards.filter((c) => !c.exported).length;
+  const due = dueCards(cards).length;
   const acc = quizAccuracy(history.slice(-10));
 
   return (
@@ -82,14 +82,14 @@ export default function App() {
 
       <div className={cn("grid grid-cols-3 gap-2", !settings.enabled && "opacity-50")}>
         <Stat value={known.length} label="aprendidas" className="text-known" section="vocab" />
-        <Stat value={fresh} label="cartões novos" className="text-info" section="cards" />
+        <Stat value={due} label="para revisar" className="text-info" section="cards" />
         <Stat value={acc === null ? "—" : `${acc}%`} label="acerto" section="home" />
       </div>
 
       <Button onClick={() => open()}>Abrir hub de estudo</Button>
-      {fresh > 0 && (
-        <Button variant="secondary" onClick={() => exportCards(true)}>
-          Exportar {fresh} {fresh === 1 ? "cartão novo" : "cartões novos"} para o Anki
+      {due > 0 && (
+        <Button variant="secondary" onClick={() => open("cards")}>
+          Revisar {due} {due === 1 ? "cartão" : "cartões"}
         </Button>
       )}
 

@@ -1,12 +1,13 @@
-import { Search } from "lucide-react";
+import { Layers, Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WORD_RE, normalizeWord } from "@/lib/common";
+import { GRADUATE_DAYS, NEW_WORDS_PER_SESSION, WORD_RE, dueWords, fmtUntil, normalizeWord } from "@/lib/common";
 import { cn } from "@/lib/utils";
 import type { HubData } from "../data";
+import WordReview from "./WordReview";
 
 export type VocabTab = "study" | "known";
 
@@ -21,8 +22,12 @@ export default function VocabPage({
   tab: VocabTab;
   onTab: (tab: VocabTab) => void;
 }) {
-  const { known, seen, wordStats, studyWords, saveKnown } = data;
+  const { known, seen, wordStats, wordSrs, studyWords, saveKnown } = data;
   const [query, setQuery] = useState("");
+  const [queue, setQueue] = useState<string[] | null>(null);
+  const now = Date.now();
+  const { review, fresh } = dueWords(studyWords, wordSrs, now);
+  const freshInSession = Math.min(fresh.length, NEW_WORDS_PER_SESSION);
   const [toAdd, setToAdd] = useState("");
 
   const q = query.trim().toLowerCase();
@@ -52,6 +57,15 @@ export default function VocabPage({
       ? "Nada para estudar ainda. Assista um vídeo com legendas."
       : "Nenhuma palavra aprendida ainda. Clique numa palavra da legenda para marcá-la.";
 
+  if (queue) {
+    return (
+      <div className="flex flex-col gap-5">
+        <h2 className="text-2xl font-semibold">Vocabulário · flashcards</h2>
+        <WordReview data={data} queue={queue} onQueue={setQueue} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <h2 className="text-2xl font-semibold">Vocabulário</h2>
@@ -73,6 +87,29 @@ export default function VocabPage({
             : "Palavras que você marcou como aprendidas. Elas ficam verdes na legenda."}
         </p>
       </div>
+
+      {tab === "study" && review.length + freshInSession > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-info/30 bg-info/10 px-4 py-3">
+          <Layers className="size-5 text-info" />
+          <p className="flex-1">
+            <b>{review.length + freshInSession}</b> {review.length + freshInSession === 1 ? "palavra" : "palavras"} para
+            revisar
+            {freshInSession > 0 && (
+              <span className="text-muted-foreground">
+                {" "}
+                ({freshInSession} {freshInSession === 1 ? "nova" : "novas"})
+              </span>
+            )}
+            <span className="block text-xs text-muted-foreground">
+              Flashcards com repetição espaçada. Quando uma palavra só precisar voltar daqui a {GRADUATE_DAYS} dias
+              ou mais, ela vai para Aprendidas.
+            </span>
+          </p>
+          <Button onClick={() => setQueue([...review, ...fresh.slice(0, NEW_WORDS_PER_SESSION)])}>
+            Estudar com flashcards
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative min-w-56 flex-1">
@@ -106,6 +143,11 @@ export default function VocabPage({
               <li key={w} className="flex items-center gap-3 px-4 py-2">
                 <span className={cn("font-medium", tab === "study" ? "text-study" : "text-known")}>{w}</span>
                 {count > 0 && <span className="text-xs text-muted-foreground">vista {count}x</span>}
+                {tab === "study" && wordSrs[w] && (
+                  <span className="text-xs text-info" title="Próxima revisão nos flashcards">
+                    {wordSrs[w].due <= now ? "revisar" : `revisa em ${fmtUntil(wordSrs[w].due, now)}`}
+                  </span>
+                )}
                 {st && (
                   <span className="font-mono text-xs" title="Acertos / erros nos exercícios">
                     <span className="text-known">✓{st.ok}</span> <span className="text-destructive">✗{st.fail}</span>

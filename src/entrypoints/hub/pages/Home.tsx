@@ -1,7 +1,7 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cleanTitle, quizAccuracy } from "@/lib/common";
+import { cleanTitle, dueCards, quizAccuracy } from "@/lib/common";
 import { cn } from "@/lib/utils";
 import type { HubData } from "../data";
 import type { VocabTab } from "./Vocab";
@@ -41,7 +41,7 @@ const KEYS: [ReactNode, string][] = [
   [<><kbd>A</kbd> <kbd>D</kbd></>, "frase anterior / próxima"],
   [<kbd>S</kbd>, "repete a frase"],
   [<kbd>Q</kbd>, "pausa ao fim de cada frase"],
-  [<kbd>E</kbd>, "cria cartão Anki da frase"],
+  [<kbd>E</kbd>, "cria cartão da frase"],
 ];
 
 export default function HomePage({
@@ -68,8 +68,8 @@ export default function HomePage({
       text: <><a className="text-info hover:underline" href="#settings">Configure a IA</a> para ganhar exercícios ao fim de cada vídeo.</>,
     },
     {
-      done: cards.some((c) => c.exported),
-      text: <>Crie cartões com o <b>+</b> de uma frase e <a className="text-info hover:underline" href="#cards">exporte para o Anki</a>.</>,
+      done: cards.some((c) => c.srs),
+      text: <>Crie cartões com o <b>+</b> de uma frase e <a className="text-info hover:underline" href="#cards">revise-os aqui no hub</a>.</>,
     },
   ];
 
@@ -80,7 +80,7 @@ export default function HomePage({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat value={known.size} label="palavras aprendidas" className="text-known" href="#vocab" onClick={() => onVocabTab("known")} />
         <Stat value={studyWords.length} label="para estudar" className="text-study" href="#vocab" onClick={() => onVocabTab("study")} />
-        <Stat value={cards.length} label="cartões Anki" className="text-info" href="#cards" />
+        <Stat value={dueCards(cards).length} label="cartões para revisar" className="text-info" href="#cards" />
         <Stat value={acc === null ? "—" : `${acc}%`} label="acerto nos exercícios" />
       </div>
 
