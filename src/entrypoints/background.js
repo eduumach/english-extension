@@ -21,11 +21,13 @@ export default defineBackground(() => {
   });
 
   const handlers = {
-    lookup: (msg) => lookup(msg.word, msg.tl || "pt"),
-    quiz: (msg) => generateQuiz(msg.items, msg.tl || "pt"),
-    "ai-cards": (msg) => generateCards(msg.items, msg.unknown || [], msg.tl || "pt", msg.max || 8),
-    "card-back": (msg) => cardBack(msg.sentence, msg.words || [], msg.tl || "pt"),
-    examples: (msg) => examples(msg.word, msg.tl || "pt"),
+    // sl = language being studied, tl = the learner's own language.
+    lookup: (msg) => lookup(msg.word, msg.sl || "en", msg.tl || "pt"),
+    quiz: (msg) => generateQuiz(msg.items, msg.sl || "en", msg.tl || "pt"),
+    "ai-cards": (msg) =>
+      generateCards(msg.items, msg.unknown || [], msg.sl || "en", msg.tl || "pt", msg.max || 8),
+    "card-back": (msg) => cardBack(msg.sentence, msg.words || [], msg.sl || "en", msg.tl || "pt"),
+    examples: (msg) => examples(msg.word, msg.sl || "en", msg.tl || "pt"),
     "open-hub": async () => {
       await chrome.tabs.create({ url: chrome.runtime.getURL("/hub.html") });
       return { ok: true };
@@ -48,12 +50,13 @@ export default defineBackground(() => {
     return true;
   });
 
-  async function lookup(word, tl) {
-    const key = `${word}|${tl}`;
+  async function lookup(word, sl, tl) {
+    const key = `${word}|${sl}|${tl}`;
     if (cache.has(key)) return cache.get(key);
     const [tr, dict] = await Promise.all([
-      translateWord(word, tl).catch(() => null),
-      defineWord(word).catch(() => null),
+      translateWord(word, sl, tl).catch(() => null),
+      // dictionaryapi.dev only has English.
+      sl === "en" ? defineWord(word).catch(() => null) : null,
     ]);
     if (!tr && !dict) throw new Error("lookup failed");
     const result = { word, ...(tr || {}), ...(dict || {}) };
@@ -61,9 +64,9 @@ export default defineBackground(() => {
     return result;
   }
 
-  async function translateText(text, tl) {
+  async function translateText(text, sl, tl) {
     const url =
-      "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en" +
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}` +
       `&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(text)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -71,12 +74,12 @@ export default defineBackground(() => {
     return (data[0] || []).map((x) => x[0]).join("");
   }
 
-  async function cardBack(sentence, words, tl) {
+  async function cardBack(sentence, words, sl, tl) {
     const [translation, notes] = await Promise.all([
-      translateText(sentence, tl).catch(() => ""),
+      translateText(sentence, sl, tl).catch(() => ""),
       Promise.all(
         words.slice(0, 6).map((word) =>
-          translateWord(word, tl).then(
+          translateWord(word, sl, tl).then(
             (r) => ({ word, tr: r.translation }),
             () => ({ word, tr: "" }),
           ),
@@ -86,9 +89,9 @@ export default defineBackground(() => {
     return { translation, words: notes.filter((n) => n.tr && n.tr.toLowerCase() !== n.word) };
   }
 
-  async function translateWord(word, tl) {
+  async function translateWord(word, sl, tl) {
     const url =
-      "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en" +
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}` +
       `&tl=${encodeURIComponent(tl)}&dt=t&dt=bd&q=${encodeURIComponent(word)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -140,19 +143,20 @@ export default defineBackground(() => {
   }
 
   // Tatoeba uses ISO 639-3 codes.
-  const TATOEBA_LANGS = { pt: "por", es: "spa", fr: "fra", de: "deu", it: "ita", ja: "jpn" };
+  const TATOEBA_LANGS = { en: "eng", pt: "por", es: "spa", fr: "fra", de: "deu", it: "ita", ja: "jpn" };
   const exampleCache = new Map();
 
   // Example sentences with the word, from Tatoeba (free, human-written, with translations).
   // -> { examples: [{ text, translation }] }
-  async function examples(word, tl) {
-    const key = `${word}|${tl}`;
+  async function examples(word, sl, tl) {
+    const key = `${word}|${sl}|${tl}`;
     if (exampleCache.has(key)) return exampleCache.get(key);
+    const from = TATOEBA_LANGS[sl] || "eng";
     const to = TATOEBA_LANGS[tl] || "por";
     // The legacy search matches the exact word; the newer API stems it ("reluctant" ->
     // "reluctantly"), so it's only the fallback.
-    let list = (await tatoebaLegacy(word, to).catch(() => [])).filter((e) => e.translation);
-    if (!list.length) list = (await tatoebaNew(word, to).catch(() => [])).filter((e) => e.translation);
+    let list = (await tatoebaLegacy(word, from, to).catch(() => [])).filter((e) => e.translation);
+    if (!list.length) list = (await tatoebaNew(word, from, to).catch(() => [])).filter((e) => e.translation);
     const result = { examples: list.slice(0, 5) };
     exampleCache.set(key, result);
     return result;
@@ -162,20 +166,20 @@ export default defineBackground(() => {
     return translations.flat().find((t) => t?.lang === to)?.text || "";
   }
 
-  async function tatoebaLegacy(word, to) {
+  async function tatoebaLegacy(word, from, to) {
     const url =
-      "https://tatoeba.org/en/api_v0/search?from=eng&orphans=no&unapproved=no&sort=relevance" +
-      `&to=${to}&query=${encodeURIComponent(`=${word}`)}`;
+      "https://tatoeba.org/en/api_v0/search?orphans=no&unapproved=no&sort=relevance" +
+      `&from=${from}&to=${to}&query=${encodeURIComponent(`=${word}`)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return (data.results || []).map((r) => ({ text: r.text, translation: pickTranslation(r.translations || [], to) }));
   }
 
-  async function tatoebaNew(word, to) {
+  async function tatoebaNew(word, from, to) {
     const url =
-      "https://api.tatoeba.org/unstable/sentences?lang=eng&sort=relevance&limit=10" +
-      `&trans:lang=${to}&q=${encodeURIComponent(word)}`;
+      "https://api.tatoeba.org/unstable/sentences?sort=relevance&limit=10" +
+      `&lang=${from}&trans:lang=${to}&q=${encodeURIComponent(word)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -183,6 +187,7 @@ export default defineBackground(() => {
   }
 
   const LANG_NAMES = {
+    en: "English",
     pt: "Brazilian Portuguese",
     es: "Spanish",
     fr: "French",
@@ -192,17 +197,18 @@ export default defineBackground(() => {
   };
 
   // items: [{ word, context }] -> { questions: [{ word, type, question, options, answer, explanation }] }
-  async function generateQuiz(items, tl) {
+  async function generateQuiz(items, sl, tl) {
     const lang = LANG_NAMES[tl] || LANG_NAMES.pt;
+    const study = LANG_NAMES[sl] || LANG_NAMES.en;
     const system =
-      `You are a friendly English tutor. The student's native language is ${lang}. ` +
+      `You are a friendly ${study} tutor. The student's native language is ${lang}. ` +
       "You write short multiple-choice exercises that check whether the student really knows a word. " +
       "Respond only with JSON.";
     const user = `Create exactly one exercise per word below. Vary the type:
   - "meaning": choose the correct ${lang} meaning of the word as used in its context sentence
-  - "fill_blank": a NEW short English sentence with "___" where the word goes; options are English words
-  - "usage": choose the English sentence that uses the word correctly
-  Rules: 4 options, exactly one correct, plausible distractors, short question in English, explanation in ${lang} (one sentence). Use the sense the word has in its context sentence.
+  - "fill_blank": a NEW short ${study} sentence with "___" where the word goes; options are ${study} words
+  - "usage": choose the ${study} sentence that uses the word correctly
+  Rules: 4 options, exactly one correct, plausible distractors, short question in ${study}, explanation in ${lang} (one sentence). Use the sense the word has in its context sentence.
 
   Words:
   ${items.map((it, i) => `${i + 1}. "${it.word}" (context: "${it.context.slice(0, 200)}")`).join("\n")}
@@ -248,13 +254,14 @@ export default defineBackground(() => {
   }
 
   // items: [{ i, text }] transcript lines -> { cards: [{ lineStart, lineEnd, focus, translation, explanation }] }
-  async function generateCards(items, unknown, tl, max) {
+  async function generateCards(items, unknown, sl, tl, max) {
     const lang = LANG_NAMES[tl] || LANG_NAMES.pt;
+    const study = LANG_NAMES[sl] || LANG_NAMES.en;
     const system =
-      `You are an English tutor helping a ${lang} speaker build flashcards from a YouTube transcript. ` +
+      `You are a ${study} tutor helping a ${lang} speaker build flashcards from a YouTube transcript. ` +
       "Respond only with JSON.";
     const user = `Pick up to ${max} of the most useful sentences from the transcript for this learner.
-  Prefer sentences with words from the "unknown words" list, phrasal verbs, idioms or collocations worth learning. Skip filler, greetings and broken fragments.
+  Prefer sentences with words from the "unknown words" list, idioms, phrasal verbs or fixed expressions and collocations worth learning. Skip filler, greetings and broken fragments.
   A sentence may span consecutive lines (at most 3): give the first and last line numbers.
   For each card:
   - "focus": 1-3 words or expressions from the sentence to learn (as they appear)

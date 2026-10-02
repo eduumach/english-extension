@@ -7,15 +7,21 @@ export function useStorage<T>(key: string, fallback: T): [T, boolean] {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    let stale = false;
+    // The key can change (e.g. per-language data): show the new key's value, not the old one.
     browser.storage.local.get(key).then((data) => {
-      if (data[key] !== undefined) setValue(data[key] as T);
+      if (stale) return;
+      setValue(data[key] !== undefined ? (data[key] as T) : fallback);
       setLoaded(true);
     });
     const onChange = (changes: Record<string, { newValue?: unknown }>, area: string) => {
       if (area === "local" && changes[key]) setValue((changes[key].newValue ?? fallback) as T);
     };
     browser.storage.onChanged.addListener(onChange);
-    return () => browser.storage.onChanged.removeListener(onChange);
+    return () => {
+      stale = true;
+      browser.storage.onChanged.removeListener(onChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

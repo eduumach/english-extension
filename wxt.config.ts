@@ -9,9 +9,9 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   vite: () => ({ plugins: [tailwindcss()] }),
   manifest: {
-    name: "YouTube English Study",
+    name: "Glossa",
     description:
-      "Estude inglês no YouTube: legendas duplas, transcrição clicável, dicionário e vocabulário.",
+      "Aprenda vocabulário com as legendas do YouTube: transcrição clicável, dicionário, flashcards e exercícios.",
     permissions: ["storage"],
     host_permissions: [
       "https://www.youtube.com/*",
@@ -23,7 +23,7 @@ export default defineConfig({
     ],
     optional_host_permissions: ["https://*/*"],
     icons,
-    action: { default_title: "YouTube English Study", default_icon: icons },
+    action: { default_title: "Glossa", default_icon: icons },
     options_ui: { page: "hub.html", open_in_tab: true },
   },
 });

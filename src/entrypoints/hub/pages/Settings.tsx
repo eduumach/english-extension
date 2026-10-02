@@ -23,7 +23,9 @@ import {
   CARDS_KEY,
   SEEN_KEY,
   STORAGE_KEY,
+  STUDY_LANGS,
   exportBackup,
+  langKey,
   parseBackup,
   restoreBackup,
   type Backup,
@@ -50,7 +52,7 @@ const TOGGLES: [keyof Settings, string, string][] = [
   ["quizAfterVideo", "Exercícios ao terminar o vídeo", "Precisa da IA configurada abaixo"],
 ];
 
-function SettingRow({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
+function SettingRow({ title, hint, children }: { title: string; hint: ReactNode; children: ReactNode }) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-4 py-3">
       <span className="flex flex-col">
@@ -164,10 +166,13 @@ function LlmCard({ data }: { data: HubData }) {
 }
 
 function backupSummary({ data, legacy }: Backup) {
-  const known = (data[STORAGE_KEY] as string[] | undefined)?.length || 0;
+  // Word data is split per studied language ("knownWords", "knownWords:es", ...): add them up.
+  const total = (base: string, size: (v: any) => number) =>
+    Object.entries(data).reduce((n, [k, v]) => n + (k.split(":")[0] === base && v ? size(v) : 0), 0);
+  const known = total(STORAGE_KEY, (v: string[]) => v.length);
   if (legacy) return `${known} palavras aprendidas serão somadas às suas.`;
   const cards = (data[CARDS_KEY] as StudyCard[] | undefined)?.length || 0;
-  const seen = Object.keys((data[SEEN_KEY] as object | undefined) || {}).length;
+  const seen = total(SEEN_KEY, (v: object) => Object.keys(v).length);
   return `${known} palavras aprendidas, ${seen} vistas e ${cards} cartões. Isso substitui os dados atuais.`;
 }
 
@@ -175,6 +180,7 @@ export default function SettingsPage({ data }: { data: HubData }) {
   const { settings, saveSettings } = data;
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<Backup | null>(null);
+  const studyLangName = STUDY_LANGS.find(([v]) => v === settings.studyLang)?.[1].toLowerCase() || settings.studyLang;
 
   async function pickFile(file: File) {
     try {
@@ -205,7 +211,33 @@ export default function SettingsPage({ data }: { data: HubData }) {
           <CardTitle>Durante o vídeo</CardTitle>
         </CardHeader>
         <CardContent className="divide-y">
-          <SettingRow title="Idioma da tradução" hint="Usado no dicionário, nos cartões e nos exercícios">
+          <SettingRow
+            title="Idioma que você estuda"
+            hint={
+              settings.studyLang === settings.targetLang ? (
+                <span className="text-destructive">É o mesmo do seu idioma: as traduções não vão ajudar.</span>
+              ) : (
+                "O idioma das legendas. Suas palavras e revisões ficam separadas por idioma."
+              )
+            }
+          >
+            <Select value={settings.studyLang} onValueChange={(studyLang) => saveSettings({ studyLang })}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STUDY_LANGS.map(([v, label]) => (
+                  <SelectItem key={v} value={v}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </SettingRow>
+          <SettingRow
+            title="Seu idioma"
+            hint="As traduções e explicações aparecem neste idioma."
+          >
             <Select value={settings.targetLang} onValueChange={(targetLang) => saveSettings({ targetLang })}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -279,13 +311,16 @@ export default function SettingsPage({ data }: { data: HubData }) {
           <CardTitle>Apagar dados</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <ConfirmButton title="Apagar todas as palavras aprendidas?" onConfirm={() => clear({ [STORAGE_KEY]: [] })}>
+          <ConfirmButton
+            title={`Apagar todas as palavras aprendidas em ${studyLangName}?`}
+            onConfirm={() => clear({ [langKey(STORAGE_KEY, settings.studyLang)]: [] })}
+          >
             Apagar palavras aprendidas
           </ConfirmButton>
           <ConfirmButton
-            title="Apagar o histórico de palavras vistas?"
+            title={`Apagar o histórico de palavras vistas em ${studyLangName}?`}
             description="As palavras aprendidas não são afetadas."
-            onConfirm={() => clear({ [SEEN_KEY]: {} })}
+            onConfirm={() => clear({ [langKey(SEEN_KEY, settings.studyLang)]: {} })}
           >
             Apagar histórico de vistas
           </ConfirmButton>

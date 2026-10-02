@@ -14,6 +14,7 @@ export default defineContentScript({
     const QUIZ_MAX_UNKNOWN = 5;
     const DEFAULT_SETTINGS = {
       enabled: true,
+      studyLang: "en",
       targetLang: "pt",
       autoPause: false,
       pauseOnHover: true,
@@ -59,16 +60,32 @@ export default defineContentScript({
     let popupWord = null;
     const lookupCache = new Map();
 
+    // Word data (known, seen, quiz stats) is kept per studied language. English keeps
+    // the original keys; same scheme as langKey in lib/common.ts.
+    function langKey(base, lang = settings.studyLang) {
+      return lang === "en" ? base : `${base}:${lang}`;
+    }
+
+    // BCP 47 tags for speech synthesis.
+    const VOICE_LANGS = { en: "en-US", es: "es-ES", fr: "fr-FR", de: "de-DE", it: "it-IT", pt: "pt-BR" };
+
     async function loadStorage() {
-      const data = await chrome.storage.local.get([STORAGE_KEY, SEEN_KEY, SETTINGS_KEY, CARDS_KEY]);
-      knownWords = new Set(data[STORAGE_KEY] || []);
+      const data = await chrome.storage.local.get([SETTINGS_KEY, CARDS_KEY]);
       savedCardKeys = new Set((data[CARDS_KEY] || []).map((c) => c.key));
-      seenWords = data[SEEN_KEY] || {};
       settings = { ...DEFAULT_SETTINGS, ...(data[SETTINGS_KEY] || {}) };
+      await loadWordData();
+    }
+
+    async function loadWordData() {
+      const knownKey = langKey(STORAGE_KEY);
+      const seenKey = langKey(SEEN_KEY);
+      const data = await chrome.storage.local.get([knownKey, seenKey]);
+      knownWords = new Set(data[knownKey] || []);
+      seenWords = data[seenKey] || {};
     }
 
     async function saveKnownWords() {
-      await chrome.storage.local.set({ [STORAGE_KEY]: [...knownWords] });
+      await chrome.storage.local.set({ [langKey(STORAGE_KEY)]: [...knownWords] });
     }
 
     function saveSettings() {
@@ -77,19 +94,34 @@ export default defineContentScript({
 
     function scheduleSeenSave() {
       if (seenSaveTimer) return;
-      seenSaveTimer = setTimeout(() => {
-        seenSaveTimer = null;
-        chrome.storage.local.set({ [SEEN_KEY]: seenWords });
-      }, 1000);
+      seenSaveTimer = setTimeout(flushSeenSave, 1000);
+    }
+
+    function flushSeenSave(lang = settings.studyLang) {
+      if (!seenSaveTimer) return;
+      clearTimeout(seenSaveTimer);
+      seenSaveTimer = null;
+      chrome.storage.local.set({ [langKey(SEEN_KEY, lang)]: seenWords });
+    }
+
+    // New studied language: save what's pending under the old one, load the new word
+    // data and start over on the current video so the matching caption track is picked.
+    async function switchStudyLang(prevLang) {
+      flushSeenSave(prevLang);
+      await loadWordData();
+      reprocessAllSegments();
+      if (!settings.enabled) return;
+      currentVideoId = null;
+      onVideoChange();
     }
 
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== "local") return;
-      if (changes[STORAGE_KEY]) {
-        applyKnownWords(new Set(changes[STORAGE_KEY].newValue || []));
+      if (changes[langKey(STORAGE_KEY)]) {
+        applyKnownWords(new Set(changes[langKey(STORAGE_KEY)].newValue || []));
       }
-      if (changes[SEEN_KEY]) {
-        seenWords = changes[SEEN_KEY].newValue || {};
+      if (changes[langKey(SEEN_KEY)]) {
+        seenWords = changes[langKey(SEEN_KEY)].newValue || {};
       }
       if (changes[CARDS_KEY]) {
         savedCardKeys = new Set((changes[CARDS_KEY].newValue || []).map((c) => c.key));
@@ -97,9 +129,11 @@ export default defineContentScript({
       }
       if (changes[SETTINGS_KEY]) {
         const wasEnabled = settings.enabled;
+        const prevLang = settings.studyLang;
         settings = { ...DEFAULT_SETTINGS, ...(changes[SETTINGS_KEY].newValue || {}) };
         updateToggleButtons();
         if (wasEnabled !== settings.enabled) applyEnabled();
+        if (prevLang !== settings.studyLang) switchStudyLang(prevLang);
       }
     });
 
@@ -309,16 +343,16 @@ export default defineContentScript({
 
     function onCaptured({ videoId, key, lang, kind }) {
       if (!settings.enabled || videoId !== currentVideoId || key === trackKey || key === loadingKey) return;
-      const isEn = lang.startsWith("en");
+      const isStudy = lang.startsWith(settings.studyLang);
       if (trackInfo) {
-        const curEn = trackInfo.lang.startsWith("en");
-        // Never swap an English track for another language, nor manual for auto-generated.
-        if (curEn && !isEn) return;
-        if (curEn && trackInfo.kind !== "asr" && kind === "asr") return;
+        const curStudy = trackInfo.lang.startsWith(settings.studyLang);
+        // Never swap a track in the studied language for another one, nor manual for auto-generated.
+        if (curStudy && !isStudy) return;
+        if (curStudy && trackInfo.kind !== "asr" && kind === "asr") return;
       }
-      if (!isEn && !triedSwitch) {
+      if (!isStudy && !triedSwitch) {
         triedSwitch = true;
-        postToHook({ type: "enable-captions", videoId });
+        postToHook({ type: "enable-captions", videoId, lang: settings.studyLang });
       }
       loadTrack(videoId, key, { lang, kind });
     }
@@ -584,10 +618,10 @@ export default defineContentScript({
     const ICON_SPEAKER = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
 
     function lookupWord(word) {
-      const key = `${word}|${settings.targetLang}`;
+      const key = `${word}|${settings.studyLang}|${settings.targetLang}`;
       if (!lookupCache.has(key)) {
         const p = chrome.runtime
-          .sendMessage({ type: "lookup", word, tl: settings.targetLang })
+          .sendMessage({ type: "lookup", word, sl: settings.studyLang, tl: settings.targetLang })
           .catch((err) => ({ error: String(err?.message || err) }))
           .then((res) => {
             if (!res || res.error) lookupCache.delete(key);
@@ -602,7 +636,7 @@ export default defineContentScript({
       try {
         speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = "en-US";
+        u.lang = VOICE_LANGS[settings.studyLang] || settings.studyLang;
         u.rate = 0.9;
         speechSynthesis.speak(u);
       } catch {}
@@ -812,6 +846,7 @@ export default defineContentScript({
             type: "ai-cards",
             items,
             unknown: unknown.slice(0, 100),
+            sl: settings.studyLang,
             tl: settings.targetLang,
             max: 8,
           })
@@ -846,6 +881,7 @@ export default defineContentScript({
             title,
             time: Math.floor(lines[start].start),
             ts: Date.now(),
+            lang: settings.studyLang,
             source: "ai",
           });
         }
@@ -877,7 +913,13 @@ export default defineContentScript({
         (w) => !knownWords.has(w) && w.length >= 3,
       );
       const back = await chrome.runtime
-        .sendMessage({ type: "card-back", sentence: line.text, words, tl: settings.targetLang })
+        .sendMessage({
+          type: "card-back",
+          sentence: line.text,
+          words,
+          sl: settings.studyLang,
+          tl: settings.targetLang,
+        })
         .catch(() => null);
       const card = {
         key,
@@ -889,6 +931,7 @@ export default defineContentScript({
         title: videoTitle(),
         time: Math.floor(line.start),
         ts: Date.now(),
+        lang: settings.studyLang,
       };
       await appendCards([card]);
       showToast(card.translation ? "Cartão criado" : "Cartão criado (sem tradução)");
@@ -914,8 +957,9 @@ export default defineContentScript({
     // Mostly words you don't know yet (most frequent in the video first), topped up
     // with known words you've been least tested on, to check you really know them.
     async function pickQuizWords() {
-      const data = await chrome.storage.local.get(WORD_STATS_KEY);
-      const stats = data[WORD_STATS_KEY] || {};
+      const statsKey = langKey(WORD_STATS_KEY);
+      const data = await chrome.storage.local.get(statsKey);
+      const stats = data[statsKey] || {};
       const pool = seenInVideo.size ? [...seenInVideo] : [...videoWordFreq.keys()];
       const freq = (w) => videoWordFreq.get(w) || 0;
       const unknown = pool
@@ -963,7 +1007,7 @@ export default defineContentScript({
       }
       quizMessage(`Criando ${items.length} exercícios...`);
       const res = await chrome.runtime
-        .sendMessage({ type: "quiz", items, tl: settings.targetLang })
+        .sendMessage({ type: "quiz", items, sl: settings.studyLang, tl: settings.targetLang })
         .catch((err) => ({ error: String(err?.message || err) }));
       if (!quizEl) return;
       if (!res || res.error) {
@@ -1045,8 +1089,9 @@ export default defineContentScript({
     async function finishQuiz() {
       quiz.done = true;
       const { results, wasKnown } = quiz;
-      const data = await chrome.storage.local.get([WORD_STATS_KEY, QUIZ_HISTORY_KEY]);
-      const stats = data[WORD_STATS_KEY] || {};
+      const statsKey = langKey(WORD_STATS_KEY);
+      const data = await chrome.storage.local.get([statsKey, QUIZ_HISTORY_KEY]);
+      const stats = data[statsKey] || {};
       const now = Date.now();
       for (const r of results) {
         const st = stats[r.word] || { ok: 0, fail: 0 };
@@ -1064,9 +1109,9 @@ export default defineContentScript({
         { ts: now, videoId: quiz.videoId, title: quiz.title, correct, total: results.length },
       ].slice(-100);
       await chrome.storage.local.set({
-        [WORD_STATS_KEY]: stats,
+        [statsKey]: stats,
         [QUIZ_HISTORY_KEY]: history,
-        ...(demoted.length ? { [STORAGE_KEY]: [...knownWords] } : {}),
+        ...(demoted.length ? { [langKey(STORAGE_KEY)]: [...knownWords] } : {}),
       });
       demoted.forEach((r) => refreshWordClasses(r.word));
       updatePanel();
@@ -1141,7 +1186,7 @@ export default defineContentScript({
         <div class="yt-eng-header">
           <span class="yt-eng-title">
             <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            English Study
+            Glossa
           </span>
           <span class="yt-eng-header-actions">
             <button class="yt-eng-hbtn" id="yt-eng-help-btn" title="Ajuda e atalhos">?</button>
@@ -1220,7 +1265,7 @@ export default defineContentScript({
       });
       panel.querySelector("#yt-eng-enable-cc").addEventListener("click", () => {
         setStatus("waiting");
-        postToHook({ type: "enable-captions", videoId: currentVideoId });
+        postToHook({ type: "enable-captions", videoId: currentVideoId, lang: settings.studyLang });
       });
       panel.querySelector("#yt-eng-export-video").addEventListener("click", (e) => {
         e.preventDefault();
@@ -1431,7 +1476,7 @@ export default defineContentScript({
       // If the player didn't request captions on its own, turn them on.
       enableTimer = setTimeout(() => {
         if (currentVideoId === id && !lines.length && !loadingKey) {
-          postToHook({ type: "enable-captions", videoId: id });
+          postToHook({ type: "enable-captions", videoId: id, lang: settings.studyLang });
         }
       }, 2500);
     }

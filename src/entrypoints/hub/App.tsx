@@ -50,7 +50,7 @@ export default function App() {
       <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col gap-6 border-r bg-card/40 p-4">
         <div className="flex items-center gap-2 px-2 text-base font-semibold">
           <BookOpen className="size-5" />
-          English Study
+          Glossa
         </div>
         <nav className="flex flex-col gap-1">
           {PAGES.map(({ id, label, icon: Icon }) => (

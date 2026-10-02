@@ -1,4 +1,4 @@
-# YouTube English Study
+# Glossa
 
 Extensão do Chrome que colore as legendas do YouTube em tempo real:
 
@@ -25,7 +25,7 @@ Clique em qualquer palavra direto na legenda para marcá-la como conhecida (ou d
   - **Inicio:** numeros, primeiros passos, exercicios recentes e atalhos;
   - **Vocabulario:** palavras para estudar (vistas e ainda nao aprendidas, por frequencia) e aprendidas, com flashcards das palavras para estudar (frase de exemplo do [Tatoeba](https://tatoeba.org) com traducao; mesma repeticao espacada dos cartoes; ate 10 palavras novas por sessao, e a palavra que chega a 21 dias de intervalo vai para aprendidas);
   - **Cartoes:** revisao com repeticao espacada e lista de todos os cartoes;
-  - **Configuracoes:** idioma, pausas, IA, backup e apagar dados.
+  - **Configuracoes:** idioma que voce estuda (ingles, espanhol, frances, alemao, italiano ou portugues; palavras e revisoes ficam separadas por idioma), seu idioma, pausas, IA, backup e apagar dados.
 
 - Para assistir sem a extensao, desligue no popup/hub (ou no botao de energia do painel): a legenda do YouTube volta ao normal e o icone mostra "OFF".
 

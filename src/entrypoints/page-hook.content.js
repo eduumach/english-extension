@@ -70,11 +70,11 @@ export default defineContentScript({
       }
 
       // Turn captions on through the player API so it issues a timedtext request.
-      function enableCaptions(videoId, attempt = 0) {
+      function enableCaptions(videoId, lang, attempt = 0) {
         const player = document.getElementById("movie_player");
         const response = player?.getPlayerResponse?.();
         if (!response || (videoId && response.videoDetails?.videoId !== videoId)) {
-          if (attempt < 10) setTimeout(() => enableCaptions(videoId, attempt + 1), 500);
+          if (attempt < 10) setTimeout(() => enableCaptions(videoId, lang, attempt + 1), 500);
           return;
         }
         const tracks =
@@ -83,10 +83,10 @@ export default defineContentScript({
           post({ type: "no-captions", videoId });
           return;
         }
-        const isEn = (t) => (t.languageCode || "").startsWith("en");
+        const isStudy = (t) => (t.languageCode || "").startsWith(lang);
         const pick =
-          tracks.find((t) => isEn(t) && t.kind !== "asr") ||
-          tracks.find(isEn) ||
+          tracks.find((t) => isStudy(t) && t.kind !== "asr") ||
+          tracks.find(isStudy) ||
           tracks[0];
         try {
           player.loadModule?.("captions");
@@ -113,7 +113,7 @@ export default defineContentScript({
             post({ type: "fetch-result", id: msg.id, error: String(err?.message || err) });
           }
         } else if (msg.type === "enable-captions") {
-          enableCaptions(msg.videoId);
+          enableCaptions(msg.videoId, msg.lang || "en");
         }
       });
     })();

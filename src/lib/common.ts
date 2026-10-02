@@ -10,6 +10,7 @@ export const CARDS_KEY = "cards";
 export const WORD_SRS_KEY = "wordSrs";
 export const DEFAULT_SETTINGS = {
   enabled: true,
+  studyLang: "en",
   targetLang: "pt",
   autoPause: false,
   pauseOnHover: true,
@@ -17,6 +18,22 @@ export const DEFAULT_SETTINGS = {
 };
 
 export type Settings = typeof DEFAULT_SETTINGS;
+
+// Languages that can be studied: word splitting (WORD_RE) only handles Latin script.
+export const STUDY_LANGS: [string, string][] = [
+  ["en", "Inglês"],
+  ["es", "Espanhol"],
+  ["fr", "Francês"],
+  ["de", "Alemão"],
+  ["it", "Italiano"],
+  ["pt", "Português"],
+];
+
+// Word data (known, seen, stats, reviews) is kept per studied language. English keeps
+// the original keys so data from before multi-language support stays where it was.
+export function langKey(base: string, lang: string) {
+  return lang === "en" ? base : `${base}:${lang}`;
+}
 
 export type Card = {
   key: string;
@@ -29,6 +46,7 @@ export type Card = {
   wordNotes?: { word: string; tr: string }[];
   source?: string;
   ts?: number;
+  lang?: string; // studied language; missing on cards from before multi-language support (English)
   srs?: Srs;
 };
 
@@ -173,9 +191,10 @@ export function dueWords(studyWords: [string, number][], wordSrs: WordSrs, now =
   return { review, fresh };
 }
 
-export async function setWordSrs(word: string, srs: Srs) {
-  const data = await browser.storage.local.get(WORD_SRS_KEY);
-  await browser.storage.local.set({ [WORD_SRS_KEY]: { ...(data[WORD_SRS_KEY] as WordSrs | undefined), [word]: srs } });
+export async function setWordSrs(word: string, srs: Srs, lang: string) {
+  const key = langKey(WORD_SRS_KEY, lang);
+  const data = await browser.storage.local.get(key);
+  await browser.storage.local.set({ [key]: { ...(data[key] as WordSrs | undefined), [word]: srs } });
 }
 
 // Read-modify-write against fresh storage: the content script may append cards meanwhile.
@@ -196,16 +215,22 @@ const BACKUP_KEYS = [
   WORD_SRS_KEY,
   LLM_KEY,
 ];
-const BACKUP_APP = "youtube-english-study";
+const BACKUP_APP = "glossa";
+// Backups made before the rename.
+const LEGACY_BACKUP_APPS = ["youtube-english-study"];
 
 // `legacy`: an old known-words list, merged into the current words instead of replacing them.
 export type Backup = { exportedAt?: string; legacy?: boolean; data: Record<string, unknown> };
 
+// "knownWords:es" -> "knownWords"
+const isBackupKey = (k: string) => BACKUP_KEYS.includes(k.split(":")[0]!);
+
 export async function exportBackup() {
-  const data = await browser.storage.local.get(BACKUP_KEYS);
+  const all = await browser.storage.local.get(null);
+  const data = Object.fromEntries(Object.entries(all).filter(([k]) => isBackupKey(k)));
   if (data[LLM_KEY]) data[LLM_KEY] = { ...(data[LLM_KEY] as object), apiKey: undefined };
   const file = { app: BACKUP_APP, version: 1, exportedAt: new Date().toISOString(), data };
-  downloadFile(JSON.stringify(file), `english-study-backup-${today()}.json`, "application/json");
+  downloadFile(JSON.stringify(file), `glossa-backup-${today()}.json`, "application/json");
 }
 
 // Also accepts the old "known words" export (a plain JSON list).
@@ -214,10 +239,10 @@ export function parseBackup(text: string): Backup {
   if (Array.isArray(json)) {
     return { legacy: true, data: { [STORAGE_KEY]: json.filter((w) => typeof w === "string" && w).map((w) => w.toLowerCase()) } };
   }
-  if (json?.app !== BACKUP_APP || typeof json.data !== "object") {
+  if (![BACKUP_APP, ...LEGACY_BACKUP_APPS].includes(json?.app) || typeof json.data !== "object") {
     throw new Error("este arquivo não é um backup da extensão");
   }
-  const data = Object.fromEntries(Object.entries(json.data).filter(([k]) => BACKUP_KEYS.includes(k)));
+  const data = Object.fromEntries(Object.entries(json.data).filter(([k]) => isBackupKey(k)));
   return { exportedAt: json.exportedAt, data };
 }
 

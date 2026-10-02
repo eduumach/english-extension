@@ -8,6 +8,7 @@ import {
   QUIZ_HISTORY_KEY,
   SETTINGS_KEY,
   STORAGE_KEY,
+  langKey,
   dueCards,
   openHub,
   quizAccuracy,
@@ -48,7 +49,8 @@ function Stat({
 
 export default function App() {
   const [stored] = useStorage<Partial<Settings>>(SETTINGS_KEY, {});
-  const [known] = useStorage<string[]>(STORAGE_KEY, []);
+  const settings = { ...DEFAULT_SETTINGS, ...stored };
+  const [known] = useStorage<string[]>(langKey(STORAGE_KEY, settings.studyLang), []);
   const [cards] = useStorage<Card[]>(CARDS_KEY, []);
   const [history] = useStorage<QuizResult[]>(QUIZ_HISTORY_KEY, []);
   const [llmCfg] = useStorage(LLM_KEY, {});
@@ -58,7 +60,6 @@ export default function App() {
     getLlmConfig().then((c) => setHasKey(!!c.apiKey));
   }, [llmCfg]);
 
-  const settings = { ...DEFAULT_SETTINGS, ...stored };
   const due = dueCards(cards).length;
   const acc = quizAccuracy(history.slice(-10));
 
@@ -67,7 +68,7 @@ export default function App() {
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 font-semibold">
           <BookOpen className="size-4" />
-          English Study
+          Glossa
         </h1>
         <Switch
           checked={settings.enabled}

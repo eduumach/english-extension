@@ -87,7 +87,7 @@ function WordInfo({ word, info }: { word: string; info?: Lookup | "error" }) {
         Não deu para buscar a tradução.{" "}
         <a
           className="text-info hover:underline"
-          href={`https://translate.google.com/?sl=en&text=${encodeURIComponent(word)}`}
+          href={`https://translate.google.com/?sl=auto&text=${encodeURIComponent(word)}`}
           target="_blank"
           rel="noopener"
         >
@@ -139,17 +139,17 @@ export default function WordReview({
 
   // Fetch a few words ahead so revealing the answer is instant.
   useEffect(() => {
-    const tl = settings.targetLang;
+    const { studyLang: sl, targetLang: tl } = settings;
     for (const word of queue.slice(0, 4)) {
       if (requested.current.has(word)) continue;
       requested.current.add(word);
       browser.runtime
-        .sendMessage({ type: "lookup", word, tl })
+        .sendMessage({ type: "lookup", word, sl, tl })
         .then((res: (Lookup & { error?: string }) | undefined) => (res && !res.error ? res : "error"))
         .catch(() => "error" as const)
         .then((info) => setLookups((prev) => ({ ...prev, [word]: info })));
       browser.runtime
-        .sendMessage({ type: "examples", word, tl })
+        .sendMessage({ type: "examples", word, sl, tl })
         .then((res: { examples?: Sentence[] } | undefined) => {
           // Pick among the top results so the same word doesn't always show the same sentence.
           const list = res?.examples || [];
@@ -163,7 +163,7 @@ export default function WordReview({
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue.slice(0, 4).join(), settings.targetLang]);
+  }, [queue.slice(0, 4).join(), settings.studyLang, settings.targetLang]);
 
   function markKnown(word: string) {
     saveKnown(new Set([...known, word]));
@@ -194,7 +194,7 @@ export default function WordReview({
       }}
       back={(w) => <Back word={w} info={lookups[w]} sentence={sentences[w]} card={findCard(cards, w)} />}
       onGrade={async (w, srs) => {
-        await setWordSrs(w, srs);
+        await setWordSrs(w, srs, settings.studyLang);
         if (srs.interval >= GRADUATE_DAYS) markKnown(w);
       }}
       actions={(w) => (
