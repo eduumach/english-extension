@@ -1,0 +1,40 @@
+/* Shared look for the Chrome Web Store promo tiles. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --bg: #0e0e10;
+  --card: #18181b;
+  --line: #2a2a2e;
+  --text: #f4f4f5;
+  --muted: #a1a1aa;
+  --known: #7fd17f;
+  --seen: #ffe066;
+  --new: #ff9e5e;
+  --info: #3ea6ff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", -apple-system, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Soft colored glows behind everything, in the three word-state colors. */
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+}
+
+.brand { display: flex; align-items: center; }
+.brand svg { display: block; }
+.brand b { font-weight: 800; letter-spacing: -0.03em; }
+
+.k { color: var(--known); }
+.s { color: var(--seen); font-weight: 700; }
+.n { color: var(--new); font-weight: 700; }

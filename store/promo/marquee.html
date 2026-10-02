@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Glossa marquee 1400x560</title>
+<link rel="stylesheet" href="promo.css" />
+<style>
+  body { width: 1400px; height: 560px; position: relative; }
+  .g1 { width: 520px; height: 520px; background: var(--known); left: -160px; top: -220px; }
+  .g2 { width: 460px; height: 460px; background: var(--new); right: 80px; bottom: -260px; }
+  .g3 { width: 380px; height: 380px; background: var(--seen); right: -120px; top: -180px; opacity: 0.12; }
+
+  .copy { position: absolute; left: 88px; top: 0; bottom: 0; width: 560px; display: flex; flex-direction: column; justify-content: center; gap: 26px; }
+  .brand { gap: 16px; }
+  .brand svg { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 0 0 1px rgba(255,255,255,0.08); }
+  .brand b { font-size: 40px; }
+  h1 { font-size: 50px; line-height: 1.08; font-weight: 800; letter-spacing: -0.035em; }
+  p.sub { font-size: 20px; line-height: 1.5; color: var(--muted); max-width: 520px; }
+  .legend { display: flex; gap: 22px; font-size: 16px; color: var(--muted); font-weight: 500; }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; }
+
+  .player { position: absolute; left: 720px; top: 70px; width: 600px; height: 340px; border-radius: 18px; overflow: hidden;
+    background: radial-gradient(120% 90% at 30% 20%, #3b3f58 0%, #22232f 45%, #141418 100%);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07); }
+  /* Abstract "scene": a desk lamp light and a silhouette, so it reads as a video without being one. */
+  .scene1 { position: absolute; width: 260px; height: 260px; border-radius: 50%; left: 60px; top: 30px; background: radial-gradient(circle, rgba(255,214,150,0.35), transparent 65%); }
+  .scene2 { position: absolute; left: 400px; bottom: 0; width: 170px; height: 210px; border-radius: 85px 85px 0 0; background: linear-gradient(#2c2d3a, #1d1e27); }
+  .scene3 { position: absolute; left: 440px; bottom: 175px; width: 90px; height: 90px; border-radius: 50%; background: #2f3040; }
+  .caption { position: absolute; left: 0; right: 0; bottom: 118px; text-align: center; }
+  .caption span.box { display: inline-block; background: rgba(8,8,10,0.82); padding: 8px 16px; border-radius: 6px; font-size: 25px; font-weight: 600; letter-spacing: -0.01em; }
+  .bar { position: absolute; left: 18px; right: 18px; bottom: 16px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18); }
+  .bar::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 62%; border-radius: 2px; background: #ff3b3b; }
+
+  .flash { position: absolute; left: 650px; top: 338px; width: 300px; padding: 20px 22px; border-radius: 16px; background: var(--card);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 10px; }
+  .flash .tag { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--info); }
+  .flash .word { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .flash .word small { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+  .flash .tr { font-size: 17px; font-weight: 600; }
+  .flash .ex { font-size: 14px; color: var(--muted); line-height: 1.4; border-left: 2px solid var(--line); padding-left: 10px; }
+  .flash .ex b { color: var(--seen); }
+  .grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
+  .grades span { text-align: center; font-size: 12px; font-weight: 700; padding: 7px 0; border-radius: 8px; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+  <div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+
+  <div class="copy">
+    <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#1A1A1A"/><rect x="18" y="21.25" width="64" height="13.5" rx="6.75" fill="#FF9E5E"/><rect x="18" y="21.25" width="46.08" height="13.5" rx="6.75" fill="#FFE066"/><rect x="18" y="21.25" width="26.88" height="13.5" rx="6.75" fill="#7FD17F"/><rect x="18" y="43.25" width="64" height="13.5" rx="6.75" fill="#FF9E5E"/><rect x="18" y="43.25" width="32" height="13.5" rx="6.75" fill="#FFE066"/><rect x="18" y="43.25" width="17.92" height="13.5" rx="6.75" fill="#7FD17F"/><rect x="18" y="65.25" width="49.92" height="13.5" rx="6.75" fill="#FF9E5E"/><rect x="18" y="65.25" width="39.68" height="13.5" rx="6.75" fill="#FFE066"/><rect x="18" y="65.25" width="25.6" height="13.5" rx="6.75" fill="#7FD17F"/></svg><b>Glossa</b></div>
+    <h1>Aprenda idiomas com os vídeos que você já assiste.</h1>
+    <p class="sub">Legendas coloridas pelo que você sabe, flashcards com repetição espaçada e exercícios com IA. Direto no YouTube.</p>
+    <div class="legend">
+      <span><i style="background: var(--known)"></i>aprendida</span>
+      <span><i style="background: var(--seen)"></i>já vista</span>
+      <span><i style="background: var(--new)"></i>nova</span>
+    </div>
+  </div>
+
+  <div class="player">
+    <div class="scene1"></div><div class="scene3"></div><div class="scene2"></div>
+    <div class="caption"><span class="box"><span class="k">I was</span> <span class="n">reluctant</span> <span class="k">to</span> <span class="s">admit</span> <span class="k">it, but it worked.</span></span></div>
+    <div class="bar"></div>
+  </div>
+
+  <div class="flash">
+    <span class="tag">Flashcard</span>
+    <span class="word">reluctant<small>/rɪˈlʌktənt/</small></span>
+    <span class="tr">relutante, hesitante</span>
+    <span class="ex">Tom seemed <b>reluctant</b> to help.</span>
+    <div class="grades">
+      <span style="color:#f87171">Errei</span><span class="s">Difícil</span><span class="k" style="font-weight:700">Bom</span><span style="color:var(--info)">Fácil</span>
+    </div>
+  </div>
+</body>
+</html>
