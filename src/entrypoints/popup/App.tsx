@@ -1,5 +1,6 @@
-import { BookOpen, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -67,7 +68,7 @@ export default function App() {
     <div className="flex w-72 flex-col gap-3 p-4 text-sm">
       <header className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 font-semibold">
-          <BookOpen className="size-4" />
+          <Logo size={16} />
           Glossa
         </h1>
         <Switch

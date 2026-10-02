@@ -1,4 +1,5 @@
 import "./style.css";
+import { logoSvg } from "@/lib/logo";
 
 export default defineContentScript({
   matches: ["https://www.youtube.com/*"],
@@ -1185,7 +1186,7 @@ export default defineContentScript({
       panel.innerHTML = `
         <div class="yt-eng-header">
           <span class="yt-eng-title">
-            <svg class="yt-eng-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            ${logoSvg(16, "yt-eng-icon")}
             Glossa
           </span>
           <span class="yt-eng-header-actions">

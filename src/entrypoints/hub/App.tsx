@@ -1,7 +1,8 @@
-import { BookOpen, Home, Layers, Settings as SettingsIcon, Type } from "lucide-react";
+import { Home, Layers, Settings as SettingsIcon, Type } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Logo } from "@/components/logo";
 import { Toaster } from "@/components/ui/sonner";
 import { dueCards, dueWords } from "@/lib/common";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,7 @@ export default function App() {
     <div className="flex min-h-screen text-sm">
       <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col gap-6 border-r bg-card/40 p-4">
         <div className="flex items-center gap-2 px-2 text-base font-semibold">
-          <BookOpen className="size-5" />
+          <Logo size={20} />
           Glossa
         </div>
         <nav className="flex flex-col gap-1">
